@@ -1,0 +1,23 @@
+{
+  "email": "your-email@example.com",
+  "questions": [
+    {
+      "label": "Name",
+      "name": "name",
+      "type": "text",
+      "required": true
+    },
+    {
+      "label": "Email",
+      "name": "email",
+      "type": "email",
+      "required": true
+    },
+    {
+      "label": "Message",
+      "name": "message",
+      "type": "textarea",
+      "required": true
+    }
+  ]
+}
