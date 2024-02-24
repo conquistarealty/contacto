@@ -8,11 +8,32 @@ body {
     min-height: 100vh; /* Ensure the body covers the entire viewport height */
     background-color: #222; /* Dark background color */
     color: #ddd; /* Light text color */
+    overflow-y: auto; /* Allow vertical overflow */
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.instructions {
+    font-family: Courier, monospace;
+    margin-bottom: 20px;
+    text-align: left;
+    width: 80%; /* Adjust this value to match the width of the form */
+    max-width: 600px; /* Adjust this value to match the maximum width of the form */
+    margin: 0 auto; /* Center the instructions horizontally */
+}
+
+#emailPlaceholder:hover {
+   cursor: pointer;
 }
 
 form {
     width: 80%;
-    max-width: 400px;
+    max-width: 600px;
     margin: 20px; /* Add margin around the form */
     padding: 20px;
     border-radius: 10px;

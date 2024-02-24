@@ -7,11 +7,20 @@
     <link rel="stylesheet" href="styles.css"> <!-- Link to external CSS file -->
 </head>
 <body>
+  <div class="container">
+    <div class="instructions">
+      <p>
+        Fill out the form below, and click <b>Send</b> to submit via your
+        email client. If that should fail, simply click
+        <b>Download Form</b> and manually mail the completed form
+        to: <strong id="emailPlaceholder">[Email Address]</strong>.
+      </p>
+    </div>
 
-<form id="contact-form" method="POST" enctype="text/plain">
-    <!-- Form fields will be populated dynamically -->
-</form>
-
+    <form id="contact-form" method="POST" enctype="text/plain">
+        <!-- Form fields will be populated dynamically -->
+    </form>
+  </div>
 <script>
   // Fetching and populating form fields from config.json
   fetch('config.json')
@@ -131,6 +140,21 @@
         const form = document.getElementById('contact-form');
         const email = data.email;
         form.setAttribute('action', 'mailto:' + email);
+
+        // Update email placeholder in instructions
+        const emailPlaceholder = document.getElementById('emailPlaceholder');
+        emailPlaceholder.textContent = email;
+
+        // Add click event listener to copy email to clipboard
+        emailPlaceholder.addEventListener('click', () => {
+            const tempInput = document.createElement('input');
+            tempInput.value = email;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            alert('Email copied to clipboard: ' + email);
+        });
     });
 </script>
 </body>
