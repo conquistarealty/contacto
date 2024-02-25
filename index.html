@@ -141,6 +141,13 @@
         const email = data.email;
         form.setAttribute('action', 'mailto:' + email);
 
+        // Set form backend URL if available and not null
+        const formBackendUrl = data.form_backend_url;
+        if (formBackendUrl !== null) {
+           form.setAttribute('action', formBackendUrl);
+           form.setAttribute('enctype', 'application/x-www-form-urlencoded');
+        }
+
         // Update email placeholder in instructions
         const emailPlaceholder = document.getElementById('emailPlaceholder');
         emailPlaceholder.textContent = email;
