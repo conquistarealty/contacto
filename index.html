@@ -22,12 +22,33 @@
     </form>
   </div>
 <script>
+  // Function to handle errors
+  function handleConfigError(error) {
+      // Display the error message
+      const errorMessage = document.createElement('p');
+      errorMessage.textContent = 'Error loading configuration: ' + error.message;
+      document.body.appendChild(errorMessage);
+
+      // Hide other elements
+      const container = document.querySelector('.container');
+      container.style.display = 'none';
+  }
+
   // Fetching and populating form fields from config.json
   fetch('config.json')
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
     .then(data => {
         const form = document.getElementById('contact-form');
         const formData = {}; // Object to store form data
+
+        if (!data.email) {
+            throw new Error('Email address not found in config.json');
+        }
 
         data.questions.forEach(question => {
             const label = document.createElement('label');
@@ -131,6 +152,9 @@
             }
         });
         form.appendChild(download_html_button);
+    })
+    .catch(error => {
+            handleConfigError(error);
     });
 
   // Set form action (mailto) from config.json
@@ -143,7 +167,7 @@
 
         // Set form backend URL if available and not null
         const formBackendUrl = data.form_backend_url;
-        if (formBackendUrl !== null) {
+        if (formBackendUrl !== undefined && formBackendUrl !== null) {
            form.setAttribute('action', formBackendUrl);
            form.setAttribute('enctype', 'application/x-www-form-urlencoded');
         }
