@@ -29,6 +29,7 @@ body {
 
 #emailPlaceholder:hover {
    cursor: pointer;
+   color: orange;
 }
 
 form {
