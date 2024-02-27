@@ -32,6 +32,13 @@ body {
     text-align: justify;
 }
 
+/* Media query for vertical mobile screens */
+@media screen and (max-width: 600px) and (orientation: portrait) {
+    .instructions {
+        text-align: left; /* Change text-align to left for vertical mobile screens */
+    }
+}
+
 #emailPlaceholder:hover {
    cursor: pointer;
    color: orange;
