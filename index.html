@@ -13,17 +13,21 @@
 </head>
 <body>
   <div class="container">
-    <div class="instructions">
-      <p>
-        Fill out the form below, and click <b>Send</b> to submit via your
-        email client. If that should fail, simply click
-        <b>Download Form</b> and manually mail the completed form
-        to: <strong id="emailPlaceholder">[Email Address]</strong>.
-      </p>
+    <div class="instructions-container">
+      <div class="instructions">
+        <p>
+          Fill out the form below, and click <b>Send</b> to submit it.
+          If that should fail, simply click <b>Download Form</b> and manually
+          email the completed form to:
+          <strong id="emailPlaceholder">[Email Address]</strong>.
+        </p>
+      </div>
     </div>
-    <form id="contact-form" method="POST" enctype="text/plain">
-        <!-- Form fields will be populated dynamically -->
-    </form>
+    <div class="form-container">
+      <form id="contact-form" method="POST" enctype="text/plain">
+          <!-- Form fields will be populated dynamically -->
+      </form>
+    </div>
   </div>
   <noscript>
     <div style="color: red; text-align: center; padding: 20px;">
