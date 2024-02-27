@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parley</title>
-    <link rel="stylesheet" href="styles.css"> <!-- Link to external CSS file -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parley</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .container {
+        display: none;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -16,12 +21,22 @@
         to: <strong id="emailPlaceholder">[Email Address]</strong>.
       </p>
     </div>
-
     <form id="contact-form" method="POST" enctype="text/plain">
         <!-- Form fields will be populated dynamically -->
     </form>
   </div>
+  <noscript>
+    <div style="color: red; text-align: center; padding: 20px;">
+      JavaScript is disabled. Please enable JavaScript to use this form.
+    </div>
+  </noscript>
 <script>
+  // Everything hidden by default (only displayed if javascript enabled)
+  document.addEventListener("DOMContentLoaded", function() {
+    // Show the instructions/form when JavaScript is enabled
+    document.querySelector(".container").style.display = "block";
+  });
+
   // Function to handle errors
   function handleConfigError(error) {
       // Display the error message
