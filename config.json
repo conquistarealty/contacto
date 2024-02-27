@@ -1,6 +1,6 @@
 {
   "form_backend_url": null,
-  "email": "your-email@example.com",
+  "email": "your_email@example.com",
   "questions": [
     {
       "label": "Name",
