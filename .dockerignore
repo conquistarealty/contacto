@@ -1,4 +1,4 @@
-.mypy_cache
-.pytest_cache
-__pycache__
-latest_logs
+.mypy_cache/
+.pytest_cache/
+__pycache__/
+latest_logs/
