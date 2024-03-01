@@ -123,7 +123,7 @@ flake8:
 
 # run mypy in docker container
 mypy:
-	@ ${DCKRTST} mypy tests/
+	@ ${DCKRTST} mypy --ignore-missing-imports tests/
 
 # create interactive shell in docker container
 shell:
