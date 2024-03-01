@@ -5,19 +5,16 @@ import urllib.request
 import pytest
 
 
-def test_sb_domain_reachable() -> None:
+def test_sb_domain_reachable(sb_test_url: str) -> None:
     """Sanity check to make sure domain is reachable."""
-    # set seleniumbase domain
-    domain = "https://seleniumbase.io/realworld/login"
-
     # attempt to reach domain
     try:
         # get response from request
-        response = urllib.request.urlopen(domain)
+        response = urllib.request.urlopen(sb_test_url)
 
         # check status code is 200
         assert response.getcode() == 200
 
     except urllib.error.URLError:
         # notify failure to reach
-        pytest.fail(f"Could not reach domain {domain:!r}")
+        pytest.fail(f"Could not reach domain {sb_test_url:!r}")

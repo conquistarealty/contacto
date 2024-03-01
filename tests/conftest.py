@@ -10,6 +10,12 @@ import pytest
 
 
 @pytest.fixture(scope="session")
+def sb_test_url() -> str:
+    """Simply defines the test URL for seleniumbase fixture testing."""
+    return "https://seleniumbase.io/realworld/login"
+
+
+@pytest.fixture(scope="session")
 def project_directory() -> Path:
     """Get the path of the project directory."""
     # Get the path of the current file (test_file.py)

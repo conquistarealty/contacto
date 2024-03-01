@@ -3,6 +3,8 @@
 from pathlib import Path
 from typing import Tuple
 
+from seleniumbase import BaseCase
+
 
 def check_files_subset(source_dir: Path, webfiles: Tuple[str, ...]) -> bool:
     """Check if subset of files is found in another directory."""
@@ -26,10 +28,10 @@ def test_websrc_in_temp_dir(temp_web_src: Path, website_files: Tuple[str, ...]) 
     assert check_files_subset(temp_web_src, website_files)
 
 
-def test_hello_world_sb(sb) -> None:
+def test_hello_world_sb(sb: BaseCase, sb_test_url: str) -> None:
     """Just test if SeleniumBase can work on hello world example from docs."""
     # open the browser to the login example page
-    sb.open("https://seleniumbase.io/realworld/login")
+    sb.open(sb_test_url)
 
     # type the username/password and mfa code
     sb.type("#username", "demo_user")
