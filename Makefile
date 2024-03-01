@@ -119,7 +119,7 @@ black:
 
 # run flake8 in docker container
 flake8:
-	@ ${DCKRTST} flake8
+	@ ${DCKRTST} flake8 --config=tests/.flake8
 
 # run mypy in docker container
 mypy:
