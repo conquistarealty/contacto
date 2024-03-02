@@ -115,6 +115,6 @@ def temp_web_src(
 def default_site_config(project_directory: Path) -> Dict[str, Any]:
     """Load the default config.json file."""
     # open the config file in the project dir
-    with open(project_directory / "config.json", "r") as config:
+    with open(project_directory / "config.json", "r", encoding="utf-8") as config:
         # load the JSON data into dict
         return json.load(config)

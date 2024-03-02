@@ -16,8 +16,8 @@
       "required": true
     },
     {
-      "label": "Message",
-      "name": "message",
+      "label": "在历史上的军事战争中，你认为最关键的战略决策是什么",
+      "name": "chinese_question",
       "type": "textarea",
       "required": true
     }
