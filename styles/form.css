@@ -34,7 +34,7 @@ body {
 
 /* Media query for vertical mobile screens */
 @media screen and (max-width: 600px) and (orientation: portrait) {
-    .instructions {
+    #instructions {
         text-align: left; /* Change text-align to left for vertical mobile screens */
     }
 }
