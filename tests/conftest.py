@@ -1,12 +1,43 @@
 """Configuration file for pytest."""
 
+import json
 import os
 import shutil
+import signal
+import subprocess
+import time
 from pathlib import Path
+from typing import Any
+from typing import Dict
 from typing import Generator
 from typing import Tuple
 
 import pytest
+
+
+def start_http_server(project_directory: Path, port: str) -> subprocess.Popen:
+    """Start a simple HTTP server in the project directory path."""
+    # start the HTTP server as a subprocess
+    server_process = subprocess.Popen(
+        ["python", "-m", "http.server", port],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        preexec_fn=os.setsid,  # use os.setsid to create a new process group
+        cwd=project_directory,
+    )
+
+    # wait for the server to start
+    time.sleep(2)
+
+    return server_process
+
+
+def stop_http_server(server_process: subprocess.Popen) -> None:
+    """Stop the HTTP server."""
+    # Send SIGTERM to the process group
+    os.killpg(os.getpgid(server_process.pid), signal.SIGTERM)
+    server_process.wait(timeout=2)
 
 
 @pytest.fixture(scope="session")
@@ -23,6 +54,24 @@ def project_directory() -> Path:
 
     # get grand parent dir
     return current_file_path.parents[1]
+
+
+@pytest.fixture(scope="session")
+def immutable_website_url(request, project_directory: Path) -> str:
+    """Fixture to start a simple HTTP server in the project directory path."""
+    # set the port
+    port = "8000"
+
+    # Start the HTTP server
+    server_process = start_http_server(project_directory, port)
+
+    # Define a finalizer to stop the server
+    def finalize():
+        stop_http_server(server_process)
+
+    request.addfinalizer(finalize)
+
+    return f"http://localhost:{port}"
 
 
 @pytest.fixture(scope="session")
@@ -60,3 +109,12 @@ def temp_web_src(
 
     # remove the temporary directory and its contents
     shutil.rmtree(temp_dir)
+
+
+@pytest.fixture(scope="session")
+def default_site_config(project_directory: Path) -> Dict[str, Any]:
+    """Load the default config.json file."""
+    # open the config file in the project dir
+    with open(project_directory / "config.json", "r") as config:
+        # load the JSON data into dict
+        return json.load(config)

@@ -1,8 +1,10 @@
 """Test the fixtures used in the tests."""
 
+import urllib.request
 from pathlib import Path
 from typing import Tuple
 
+import pytest
 from seleniumbase import BaseCase
 
 
@@ -45,3 +47,18 @@ def test_hello_world_sb(sb: BaseCase, sb_test_url: str) -> None:
 
     # save screenshot for confirmation
     sb.save_screenshot_to_logs()
+
+
+def test_immutable_server_up(immutable_website_url: str) -> None:
+    """Simply test that the web server for the project directory is up and normal."""
+    # attempt to reach domain
+    try:
+        # get response from request
+        response = urllib.request.urlopen(immutable_website_url)
+
+        # check status code is 200
+        assert response.getcode() == 200
+
+    except urllib.error.URLError:
+        # notify failure to reach
+        pytest.fail(f"Could not reach domain {immutable_website_url:!r}")
