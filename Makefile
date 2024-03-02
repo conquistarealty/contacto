@@ -28,10 +28,10 @@ CURRENTDIR := $(PWD)
 # docker-related variables
 DCTNR := webserver.$(notdir $(PWD))
 SRCPATH = /usr/local/src/parley
-DCKRIMG = parley
+DCKRIMG = ghcr.io/diogenesanalytics/parley:master
 DCKRBLD = docker build -t ${DCKRIMG} . --load
 DCKRUSR = --user 1000:1000
-DCKRTST =	docker run --rm ${DCKRUSR} -v ${CURRENTDIR}:${SRCPATH} -it ${DCKRIMG}
+DCKRTST = docker run --rm ${DCKRUSR} -v ${CURRENTDIR}:${SRCPATH} -it ${DCKRIMG}
 
 ################################################################################
 # COMMANDS                                                                     #
