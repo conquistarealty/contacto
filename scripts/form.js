@@ -58,6 +58,16 @@ function handleConfigError(error) {
 fetch('config.json')
 .then(response => response.json())
 .then(data => {
+    // Alert user if email key not found
+    if (!data.email) {
+        throw new Error('Email address not found in config.json');
+    }
+
+    // Set title if available
+    if (data.title) {
+      document.title = data.title;
+    }
+
     const form = document.getElementById('contact-form');
     const email = data.email;
     form.setAttribute('action', 'mailto:' + email);
@@ -95,13 +105,8 @@ fetch('config.json')
   return response.json();
 })
 .then(data => {
+    // Get form element by id
     const form = document.getElementById('contact-form');
-    const formData = {}; // Object to store form data
-
-    // Alert user if email key not found
-    if (!data.email) {
-        throw new Error('Email address not found in config.json');
-    }
 
     // Iterate over questions in config.json
     data.questions.forEach(question => {
@@ -123,6 +128,8 @@ fetch('config.json')
         if (question.required) {
             input.setAttribute('required', '');
         }
+
+        // Add to form
         form.appendChild(input);
         form.appendChild(document.createElement('br'));
     });
@@ -137,7 +144,10 @@ fetch('config.json')
     const download_html_button = document.createElement('button');
     download_html_button.setAttribute('type', 'button');
     download_html_button.textContent = 'Download Form';
+
+    // Add event to listen for click
     download_html_button.addEventListener('click', () => {
+        const formData = {};
         const inputs = form.querySelectorAll('input, textarea');
         let valid = true;
 
@@ -148,6 +158,7 @@ fetch('config.json')
             } else {
                 input.style.borderColor = '#555'; // Reset border color
             }
+
             // Store form data
             formData[input.getAttribute('data-label')] = input.value;
         });
