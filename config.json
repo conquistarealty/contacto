@@ -5,13 +5,13 @@
   "email": "your_email@example.com",
   "questions": [
     {
-      "label": "Name",
+      "label": "имя (Name)",
       "name": "name",
       "type": "text",
       "required": true
     },
     {
-      "label": "Email",
+      "label": "ایمیل (Email)",
       "name": "email",
       "type": "email",
       "required": true
