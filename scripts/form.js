@@ -63,10 +63,13 @@ fetch('config.json')
         throw new Error('Email address not found in config.json');
     }
 
-    // Set title if available
-    if (data.title) {
-      document.title = data.title;
+    // Alert user if title not found
+    if (!data.title) {
+      throw new Error('Title not found in config.json');
     }
+
+    // Set document title
+    document.title = data.title;
 
     const form = document.getElementById('contact-form');
     const email = data.email;
@@ -93,6 +96,9 @@ fetch('config.json')
         document.body.removeChild(tempInput);
         alert('Email copied to clipboard: ' + email);
     });
+})
+.catch(error => {
+        handleConfigError(error);
 });
 
 // Fetching and populating form fields from config.json
