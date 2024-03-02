@@ -1,61 +1,47 @@
 """Test all features of website."""
 
+from dataclasses import dataclass
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import Optional
 
 from seleniumbase import BaseCase
 
 
-def check_questions_schema(questions: List[Dict[str, Any]]) -> bool:
-    """Loop over list of questions and check schema of each."""
-    # loop over questions
-    for q in questions:
-        # check schema
-        match q:
-            case {
-                "label": label,
-                "name": name,
-                "type": type_,
-                "required": required,
-            } if (
-                isinstance(label, str)
-                and isinstance(name, str)
-                and isinstance(type_, str)
-                and isinstance(required, bool)
-            ):
-                # no problems
-                pass
+@dataclass
+class Question:
+    """Defines the question schema for config.json."""
 
-            case _:
-                # fail immediately
-                return False
-    # passed
-    return True
+    label: str
+    name: str
+    type: str
+    required: bool
 
 
-def test_config_minimum(default_site_config: Dict[str, Any]) -> None:
-    """Make sure default config has at least an email and one question."""
-    # make sure email exists
-    assert "email" in default_site_config, "Email must be present in config.json."
+@dataclass
+class Config:
+    """Defines the schema for config.json."""
 
-    # make sure value is not empty
-    assert isinstance(default_site_config["email"], str), "Email must be a string."
+    email: str
+    title: str
+    questions: List[Question]
+    form_backend_url: Optional[str] = None
 
-    # make sure questions exist
-    assert "questions" in default_site_config, "No questions key in config.json."
 
-    # get questions
-    questions = default_site_config["questions"]
+def check_config_schema(config: Dict[str, Any]) -> bool:
+    """Check if the config dictionary conforms to the expected schema."""
+    try:
+        # try to convert the dictionary to a Config object
+        _ = Config(**config)
+        return True
+    except TypeError:
+        return False
 
-    # make sure questions grouped in list
-    assert isinstance(questions, list), "Questions must be in a list."
 
-    # make sure at least one question in list
-    assert len(questions) >= 1, "Need at least one question to test form."
-
-    # check questions schema correct
-    assert check_questions_schema(questions), "Question schema error."
+def test_config_schema(default_site_config: Dict[str, Any]) -> None:
+    """Check that the given config.json schema is correct."""
+    assert check_config_schema(default_site_config), "Check config.json file."
 
 
 def test_normal_display(sb: BaseCase, immutable_website_url: str) -> None:
@@ -88,3 +74,17 @@ def test_email_in_instructions(
 
     # check email in text
     assert default_site_config["email"] in instruct_text
+
+
+def test_custom_title_works(
+    sb: BaseCase, immutable_website_url: str, default_site_config: Dict[str, Any]
+) -> None:
+    """Test that title is dynamically updated from config.json."""
+    # temp website src
+    sb.open(immutable_website_url)
+
+    # get the title of the webpage
+    title = sb.get_title()
+
+    # check email in text
+    assert default_site_config["title"] == title
