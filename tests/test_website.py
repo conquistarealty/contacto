@@ -25,6 +25,7 @@ class Config:
 
     email: str
     title: str
+    subject: str
     questions: List[Question]
     form_backend_url: Optional[str] = None
 

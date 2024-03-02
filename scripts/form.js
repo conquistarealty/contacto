@@ -71,9 +71,15 @@ fetch('config.json')
     // Set document title
     document.title = data.title;
 
+    // Check if subject is provided and not empty
+    if (!data.subject || data.subject.trim() === '') {
+        throw new Error('Subject is required in config.json');
+    }
+
     const form = document.getElementById('contact-form');
     const email = data.email;
-    form.setAttribute('action', 'mailto:' + email);
+    const subject = encodeURIComponent(data.subject); // Encrypt subject
+    form.setAttribute('action', 'mailto:' + email + '?subject=' + subject);
 
     // Set form backend URL if available and not null
     const formBackendUrl = data.form_backend_url;
