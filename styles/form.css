@@ -26,6 +26,7 @@ body {
 }
 
 #instructions {
+    padding-top: 20px;
     padding-left: 10px;
     padding-right: 10px;
     font-family: Courier, monospace;
@@ -48,6 +49,7 @@ body {
     max-width: 600px;
     padding-left: 10px;
     padding-right: 10px;
+    padding-bottom: 40px;
 }
 
 form {
