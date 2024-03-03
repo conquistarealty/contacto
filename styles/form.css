@@ -41,8 +41,8 @@ body {
 }
 
 #emailPlaceholder:hover {
-   cursor: pointer;
-   color: orange;
+    cursor: pointer;
+    color: orange;
 }
 
 .form-container {
@@ -64,8 +64,10 @@ label {
     margin-bottom: 0px;
     font-weight: bold;
 }
+
 input,
-textarea {
+textarea,
+select {
     width: 100%;
     margin-top: 0px;
     margin-bottom: 30px;
@@ -77,14 +79,18 @@ textarea {
     color: #ddd; /* Light text color */
     transition: border-color 0.3s ease, background-color 0.3s ease;
 }
+
 input:focus,
-textarea:focus {
+textarea:focus,
+select:focus {
     outline: none;
     border-color: #888; /* Lighter border color on focus */
 }
+
 textarea {
     resize: vertical; /* Allow vertical resizing of textarea */
 }
+
 button {
     width: 100%;
     padding: 10px;
@@ -96,9 +102,11 @@ button {
     transition: background-color 0.3s ease;
     margin-bottom: 10px; /* Add margin between buttons */
 }
+
 button:last-child {
     margin-bottom: 0; /* Remove margin from the last button */
 }
+
 button:hover {
     background-color: #45a049; /* Darker green on hover */
 }

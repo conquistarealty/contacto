@@ -130,19 +130,43 @@ fetch('config.json')
         form.appendChild(document.createElement('br'));
 
         // Create input elements for each question
-        const input = document.createElement(question.type === 'textarea' ? 'textarea' : 'input');
-        input.setAttribute('type', question.type);
-        input.setAttribute('name', question.name);
-        input.setAttribute('data-label', question.label); // Store label text as data attribute
         if (question.type === 'textarea') {
+            const input = document.createElement('textarea');
+            input.setAttribute('name', question.name);
+            input.setAttribute('data-label', question.label); // Store label
+            if (question.required) {
+                input.setAttribute('required', '');
+            }
             input.setAttribute('rows', '4');
+            // Add to form
+            form.appendChild(input);
+        } else if (question.type === 'selectbox') {
+            const select = document.createElement('select');
+            select.setAttribute('name', question.name);
+            select.setAttribute('data-label', question.label); // Store label
+            if (question.required) {
+                select.setAttribute('required', '');
+            }
+            // Create options for select box
+            question.options.forEach(option => {
+                const optionElem = document.createElement('option');
+                optionElem.textContent = option.label;
+                optionElem.setAttribute('value', option.value);
+                select.appendChild(optionElem);
+            });
+            // Add to form
+            form.appendChild(select);
+        } else {
+            const input = document.createElement('input');
+            input.setAttribute('type', question.type);
+            input.setAttribute('name', question.name);
+            input.setAttribute('data-label', question.label); // Store label
+            if (question.required) {
+                input.setAttribute('required', '');
+            }
+            // Add to form
+            form.appendChild(input);
         }
-        if (question.required) {
-            input.setAttribute('required', '');
-        }
-
-        // Add to form
-        form.appendChild(input);
         form.appendChild(document.createElement('br'));
     });
 
@@ -160,7 +184,7 @@ fetch('config.json')
     // Add event to listen for click
     download_html_button.addEventListener('click', () => {
         const formData = {};
-        const inputs = form.querySelectorAll('input, textarea');
+        const inputs = form.querySelectorAll('input, textarea, select');
         let valid = true;
 
         inputs.forEach(input => {

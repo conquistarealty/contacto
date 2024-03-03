@@ -45,6 +45,18 @@
       "name": "site_url",
       "type": "url",
       "required": true
+    },
+    {
+      "label": "Select your country",
+      "name": "country",
+      "type": "selectbox",
+      "required": true,
+      "options": [
+        {"label": "USA", "value": "USA"},
+        {"label": "Canada", "value": "CAN"},
+        {"label": "United Kingdom", "value": "UK"},
+        {"label": "Australia", "value": "AUS"}
+      ]
     }
   ]
 }
