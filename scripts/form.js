@@ -31,7 +31,17 @@ function generateHtmlContent(formData) {
 
     // Add form data to the HTML content
     for (const key in formData) {
-        htmlContent += `<label>${key}:</label><p>${formData[key]}</p>`;
+        htmlContent += `<label>${key}:</label>`;
+        // If the value is an array (multiple selections), format it as a list
+        if (Array.isArray(formData[key])) {
+            htmlContent += `<ul>`;
+            formData[key].forEach(value => {
+                htmlContent += `<li>${value}</li>`;
+            });
+            htmlContent += `</ul>`;
+        } else {
+            htmlContent += `<p>${formData[key]}</p>`;
+        }
     }
 
     // Add closing HTML tags
@@ -183,15 +193,20 @@ fetch('config.json')
         let valid = true;
 
         inputs.forEach(input => {
+          if (input.tagName === 'SELECT' && input.hasAttribute('multiple')) {
+            const selectedOptions = Array.from(input.selectedOptions);
+            const selectedValues = selectedOptions.map(option => option.value);
+            formData[input.getAttribute('data-label')] = selectedValues;
+          } else {
             if (input.hasAttribute('required') && !input.value.trim()) {
-                valid = false;
-                input.style.borderColor = 'red'; // Highlight required fields in red
+              valid = false;
+              input.style.borderColor = 'red'; // Highlight required fields in red
             } else {
-                input.style.borderColor = '#555'; // Reset border color
+              input.style.borderColor = '#555'; // Reset border color
             }
-
             // Store form data
             formData[input.getAttribute('data-label')] = input.value;
+          }
         });
 
         if (valid) {
