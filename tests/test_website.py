@@ -27,6 +27,7 @@ class Question:
     type: str
     required: bool
     options: Optional[List[SelectBoxOptions]] = field(default=None)
+    custom: Optional[Dict[str, Any]] = field(default=None)
 
     def __post_init__(self):
         """Post initialization method to validate options."""

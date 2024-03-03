@@ -129,44 +129,39 @@ fetch('config.json')
         form.appendChild(label);
         form.appendChild(document.createElement('br'));
 
+        let input;
         // Create input elements for each question
         if (question.type === 'textarea') {
-            const input = document.createElement('textarea');
-            input.setAttribute('name', question.name);
-            input.setAttribute('data-label', question.label); // Store label
-            if (question.required) {
-                input.setAttribute('required', '');
-            }
+            input = document.createElement('textarea');
             input.setAttribute('rows', '4');
-            // Add to form
-            form.appendChild(input);
         } else if (question.type === 'selectbox') {
-            const select = document.createElement('select');
-            select.setAttribute('name', question.name);
-            select.setAttribute('data-label', question.label); // Store label
-            if (question.required) {
-                select.setAttribute('required', '');
-            }
+            input = document.createElement('select');
             // Create options for select box
             question.options.forEach(option => {
                 const optionElem = document.createElement('option');
                 optionElem.textContent = option.label;
                 optionElem.setAttribute('value', option.value);
-                select.appendChild(optionElem);
+                input.appendChild(optionElem);
             });
-            // Add to form
-            form.appendChild(select);
         } else {
-            const input = document.createElement('input');
+            input = document.createElement('input');
             input.setAttribute('type', question.type);
-            input.setAttribute('name', question.name);
-            input.setAttribute('data-label', question.label); // Store label
-            if (question.required) {
-                input.setAttribute('required', '');
-            }
-            // Add to form
-            form.appendChild(input);
         }
+        input.setAttribute('name', question.name);
+        input.setAttribute('data-label', question.label); // Store label
+        if (question.required) {
+            input.setAttribute('required', '');
+        }
+
+        // Add custom attributes
+        if (question.custom) {
+            Object.entries(question.custom).forEach(([key, value]) => {
+                input.setAttribute(key, value);
+            });
+        }
+
+        // Add to form
+        form.appendChild(input);
         form.appendChild(document.createElement('br'));
     });
 
