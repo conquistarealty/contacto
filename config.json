@@ -17,9 +17,33 @@
       "required": true
     },
     {
+      "label": "Telephone Number (Optional)",
+      "name": "telephone",
+      "type": "tel",
+      "required": false
+    },
+    {
+      "label": "Age",
+      "name": "age",
+      "type": "number",
+      "required": true
+    },
+    {
+      "label": "Appointment Date/Time",
+      "name": "apt_time",
+      "type": "datetime-local",
+      "required": true
+    },
+    {
       "label": "在历史上的军事战争中，你认为最关键的战略决策是什么",
       "name": "chinese_question",
       "type": "textarea",
+      "required": true
+    },
+    {
+      "label": "Website",
+      "name": "site_url",
+      "type": "url",
       "required": true
     }
   ]
