@@ -40,7 +40,7 @@ body {
     }
 }
 
-#emailPlaceholder:hover {
+.email-placeholder:hover {
     cursor: pointer;
     color: orange;
 }

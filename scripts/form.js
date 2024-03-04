@@ -64,6 +64,25 @@ function handleConfigError(error) {
   container.style.display = 'none';
 }
 
+// Function to update email placeholders
+function updateEmailPlaceholders(email) {
+    const emailPlaceholders = document.querySelectorAll('.email-placeholder');
+    emailPlaceholders.forEach(placeholder => {
+        placeholder.textContent = email;
+    });
+}
+
+// Function to copy email to clipboard
+function copyEmailToClipboard(email) {
+    const tempInput = document.createElement('input');
+    tempInput.value = email;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    document.execCommand('copy');
+    document.body.removeChild(tempInput);
+    alert('Email copied to clipboard: ' + email);
+}
+
 // Set form action (mailto) from config.json
 fetch('config.json')
 .then(response => response.json())
@@ -99,18 +118,14 @@ fetch('config.json')
     }
 
     // Update email placeholder in instructions
-    const emailPlaceholder = document.getElementById('emailPlaceholder');
-    emailPlaceholder.textContent = email;
+    updateEmailPlaceholders(email);
 
     // Add click event listener to copy email to clipboard
-    emailPlaceholder.addEventListener('click', () => {
-        const tempInput = document.createElement('input');
-        tempInput.value = email;
-        document.body.appendChild(tempInput);
-        tempInput.select();
-        document.execCommand('copy');
-        document.body.removeChild(tempInput);
-        alert('Email copied to clipboard: ' + email);
+    const emailPlaceholders = document.querySelectorAll('.email-placeholder');
+    emailPlaceholders.forEach(placeholder => {
+        placeholder.addEventListener('click', () => {
+            copyEmailToClipboard(email);
+        });
     });
 })
 .catch(error => {
