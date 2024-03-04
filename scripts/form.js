@@ -218,10 +218,12 @@ fetch('config.json')
 
             if (input.tagName === 'SELECT' && input.hasAttribute('multiple')) {
                 const selectedOptions = Array.from(input.selectedOptions);
-                fieldValue = selectedOptions.map(option => option.value);
+
+                // Convert array to string
+                fieldValue = selectedOptions.map(option => option.value).join(', ');
             }
 
-            if (input.hasAttribute('required') && !fieldValue.trim()) {
+            if (input.hasAttribute('required') && (!fieldValue || !fieldValue.trim())) {
                 valid = false;
                 input.style.borderColor = 'red'; // Highlight required fields in red
             } else {
