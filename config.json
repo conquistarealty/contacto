@@ -52,6 +52,7 @@
       "type": "selectbox",
       "required": true,
       "options": [
+        {"label": "Select an option", "value": "", "selected": true, "disabled": true},
         {"label": "USA", "value": "USA"},
         {"label": "Canada", "value": "CAN"},
         {"label": "United Kingdom", "value": "UK"},

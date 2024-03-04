@@ -129,17 +129,17 @@ fetch('config.json')
     });
 })
 .catch(error => {
-        handleConfigError(error);
+    handleConfigError(error);
 });
 
 // Fetching and populating form fields from config.json
 fetch('config.json')
 .then(response => {
-  // Alert user if config.json unreachable
-  if (!response.ok) {
-    throw new Error('Network response was not ok');
-  }
-  return response.json();
+    // Alert user if config.json unreachable
+    if (!response.ok) {
+        throw new Error('Network response was not ok');
+    }
+    return response.json();
 })
 .then(data => {
     // Get form element by id
@@ -166,6 +166,12 @@ fetch('config.json')
                 const optionElem = document.createElement('option');
                 optionElem.textContent = option.label;
                 optionElem.setAttribute('value', option.value);
+                if (option.selected) {
+                    optionElem.setAttribute('selected', 'selected');
+                }
+                if (option.disabled) {
+                    optionElem.setAttribute('disabled', 'disabled');
+                }
                 input.appendChild(optionElem);
             });
         } else {
@@ -208,20 +214,22 @@ fetch('config.json')
         let valid = true;
 
         inputs.forEach(input => {
-          if (input.tagName === 'SELECT' && input.hasAttribute('multiple')) {
-            const selectedOptions = Array.from(input.selectedOptions);
-            const selectedValues = selectedOptions.map(option => option.value);
-            formData[input.getAttribute('data-label')] = selectedValues;
-          } else {
-            if (input.hasAttribute('required') && !input.value.trim()) {
-              valid = false;
-              input.style.borderColor = 'red'; // Highlight required fields in red
-            } else {
-              input.style.borderColor = '#555'; // Reset border color
+            let fieldValue = input.value;
+
+            if (input.tagName === 'SELECT' && input.hasAttribute('multiple')) {
+                const selectedOptions = Array.from(input.selectedOptions);
+                fieldValue = selectedOptions.map(option => option.value);
             }
+
+            if (input.hasAttribute('required') && !fieldValue.trim()) {
+                valid = false;
+                input.style.borderColor = 'red'; // Highlight required fields in red
+            } else {
+                input.style.borderColor = '#555'; // Reset border color
+            }
+
             // Store form data
-            formData[input.getAttribute('data-label')] = input.value;
-          }
+            formData[input.getAttribute('data-label')] = fieldValue;
         });
 
         if (valid) {
@@ -249,5 +257,5 @@ fetch('config.json')
     form.appendChild(download_html_button);
 })
 .catch(error => {
-        handleConfigError(error);
+    handleConfigError(error);
 });

@@ -15,6 +15,8 @@ class SelectBoxOptions:
 
     label: str
     value: str
+    selected: Optional[bool] = field(default=None)
+    disabled: Optional[bool] = field(default=None)
 
 
 @dataclass
