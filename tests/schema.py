@@ -1,6 +1,8 @@
 """Defines the various schema conatained in config.json."""
 
 import warnings
+from abc import ABC
+from abc import abstractmethod
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
@@ -9,14 +11,39 @@ from typing import List
 from typing import Optional
 
 
+class Schema(ABC):
+    """Base class for schema validation."""
+
+    @abstractmethod
+    def __post_init__(self):
+        """Abstract method for validation."""
+        pass
+
+    def validate_type(self):
+        """Default implementation of type validation."""
+        for field_name, field_type in self.__annotations__.items():
+            if field_name in self.__dataclass_fields__:
+                actual_type = type(getattr(self, field_name))
+                if not issubclass(actual_type, field_type):
+                    raise TypeError(
+                        f"Expected {field_name:!r} to be of type "
+                        f"{field_type.__name__}, got {actual_type.__name__}"
+                    )
+
+
 @dataclass
-class SelectBoxOptions:
+class SelectBoxOptions(Schema):
     """Defines the selectbox options schema for config.json."""
 
     label: str
     value: str
     selected: Optional[bool] = field(default=None)
     disabled: Optional[bool] = field(default=None)
+
+    def __post_init__(self):
+        """Perform validation."""
+        # check type
+        self.validate_type()
 
 
 @dataclass
