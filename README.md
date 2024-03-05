@@ -1,3 +1,7 @@
+[![tests](https://github.com/DiogenesAnalytics/parley/actions/workflows/tests.yml/badge.svg)](https://github.com/DiogenesAnalytics/parley/actions/workflows/tests.yml)
+[![docker](https://github.com/DiogenesAnalytics/parley/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/DiogenesAnalytics/parley/actions/workflows/docker-publish.yml)
+[![pages-build-deployment](https://github.com/DiogenesAnalytics/parley/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/DiogenesAnalytics/parley/actions/workflows/pages/pages-build-deployment)
+
 **Parley** *(noun)*
 
 **Pronunciation:** /ˈpɑːrli/
