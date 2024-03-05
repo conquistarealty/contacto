@@ -5,9 +5,6 @@ from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
 from dataclasses import field
-from typing import Any
-from typing import Dict
-from typing import List
 from typing import Optional
 
 
@@ -47,18 +44,22 @@ class SelectBoxOptions(Schema):
 
 
 @dataclass
-class Question:
+class Question(Schema):
     """Defines the question schema for config.json."""
 
     label: str
     name: str
     type: str
     required: bool
-    options: Optional[List[SelectBoxOptions]] = field(default=None)
-    custom: Optional[Dict[str, Any]] = field(default=None)
+    options: Optional[list] = field(default=None)
+    custom: Optional[dict] = field(default=None)
 
     def __post_init__(self):
         """Post initialization method to validate options."""
+        # type validation
+        self.validate_type()
+
+        # custom validation
         if self.type == "selectbox":
             if not self.options:
                 raise ValueError("Selectbox question must have options.")
@@ -77,17 +78,20 @@ class Question:
 
 
 @dataclass
-class Config:
+class Config(Schema):
     """Defines the schema for config.json."""
 
     email: str
     title: str
     subject: str
-    questions: List[Question]
+    questions: list
     form_backend_url: Optional[str] = None
 
     def __post_init__(self):
         """Post initialization method to validate questions."""
+        # check type
+        self.validate_type()
+
         validated_questions = []
         for question in self.questions:
             validated_question = Question(**question)
