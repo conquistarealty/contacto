@@ -83,6 +83,29 @@ function copyEmailToClipboard(email) {
     alert('Email copied to clipboard: ' + email);
 }
 
+// Function to dynamically deselect the default option
+ function createUpdateDefaultOption(selectElement) {
+     function updateDefaultOption() {
+         const defaultOption = selectElement.querySelector('option[value=""][disabled][selected]');
+         if (defaultOption) {
+             defaultOption.selected = false;
+             console.log("Default option removed.");
+             // Remove the event listener after it's been triggered once
+             selectElement.removeEventListener('change', updateDefaultOption);
+         }
+     }
+     // Return the closure
+     return updateDefaultOption;
+ }
+
+ // Function to print information about the select element
+ function printSelectInfo(selectElement) {
+     const label = selectElement.getAttribute('data-label') || 'No label';
+     const selectedCount = Array.from(selectElement.selectedOptions).length;
+     console.log('Select element:', label);
+     console.log('Number of selected options:', selectedCount);
+ }
+
 // Set form action (mailto) from config.json
 fetch('config.json')
 .then(response => response.json())
@@ -174,10 +197,21 @@ fetch('config.json')
                 }
                 input.appendChild(optionElem);
             });
+
+            // Attach event listener to dynamically deselect default option when any other option is selected
+            const updateDefaultOption = createUpdateDefaultOption(input);
+            input.addEventListener('change', updateDefaultOption);
+
+            // Attach event listener to print the number of selected options
+            input.addEventListener('change', () => {
+                printSelectInfo(input);
+            });
         } else {
             input = document.createElement('input');
             input.setAttribute('type', question.type);
         }
+
+        // Set the attributes common attributes for form processing
         input.setAttribute('name', question.name);
         input.setAttribute('data-label', question.label); // Store label
         if (question.required) {
