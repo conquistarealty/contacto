@@ -15,6 +15,13 @@ from typing import Tuple
 import pytest
 
 
+def pytest_configure(config):
+    """For configuring pytest with custom markers."""
+    config.addinivalue_line("markers", "schema: custom marker for schema tests.")
+    config.addinivalue_line("markers", "fixture: custom marker for fixture tests.")
+    config.addinivalue_line("markers", "website: custom marker for website tests.")
+
+
 def start_http_server(project_directory: Path, port: str) -> subprocess.Popen:
     """Start a simple HTTP server in the project directory path."""
     # start the HTTP server as a subprocess
