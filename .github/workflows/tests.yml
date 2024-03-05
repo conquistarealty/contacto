@@ -25,44 +25,43 @@ jobs:
       id-token: write
 
     steps:
-      - name: Convert repository name to lowercase
-        run: echo "::set-env name=IMAGE_NAME::$(echo ${{ env.IMAGE_NAME }} | tr '[:upper:]' '[:lower:]')"
-
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Set up BuildKit Docker container builder to be able to build
-      # multi-platform images and export cache
-      # https://github.com/docker/setup-buildx-action
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
-
-      # Login against a Docker registry except on PR
-      # https://github.com/docker/login-action
-      - name: Log into registry ${{ env.REGISTRY }}
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+      - name: Convert repository name to lowercase
+        id: lowercase_repo_name
+        uses: ASzc/change-string-case-action@v6
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          string: ${{ env.IMAGE_NAME }}
 
-      # Try pulling the Docker image first
-      - name: Pull Docker image
-        id: pull-image
+      # Store lowercase image name in an environment variable
+      - name: Set lowercase image name
+        run: echo "LOWERCASE_IMAGE_NAME=${{ steps.lowercase_repo_name.outputs.lowercase }}" >> $GITHUB_ENV
+
+      # Create environment variable for Docker image name
+      - name: Set image repository name
+        run: echo "IMAGE_REPO_NAME=${{ env.REGISTRY }}/${{ env.LOWERCASE_IMAGE_NAME }}:${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
+
+      # Check if Docker image exists
+      - name: Check if Docker image exists
+        id: check-docker-image
         run: |
           set -e
-          if ! docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}; then
-            echo "::set-output name=pull-failed::true"
+          if docker inspect "${{ env.IMAGE_REPO_NAME }}" &> /dev/null; then
+            echo "IMAGE_EXISTS=true" >> $GITHUB_ENV
+          else
+            echo "::error::Image does not exist"
+            echo "IMAGE_EXISTS=false" >> $GITHUB_ENV
           fi
+        continue-on-error: true
 
-      # Build Docker image if pull fails
-      - name: Build Docker image if pull fails
-        if: steps.pull-image.outputs.pull-failed
+      # Build Docker image if it doesn't exist
+      - name: Build Docker image if it doesn't exist
+        if: env.IMAGE_EXISTS != 'true'
         run: |
-          docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} .
+          docker build -t ${{ env.IMAGE_REPO_NAME }} .
 
       # Run pytest tests within the Docker container
       - name: Run pytest in Docker container
         run: |
-          docker run ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} pytest
+          docker run ${{ env.IMAGE_REPO_NAME }} pytest
