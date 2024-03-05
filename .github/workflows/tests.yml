@@ -44,13 +44,13 @@ jobs:
 
       # Check if Docker image exists
       - name: Check if Docker image exists
-        id: check-docker-image
         run: |
           set -e
-          if docker inspect "${{ env.IMAGE_REPO_NAME }}" &> /dev/null; then
+          if docker pull "${{ env.IMAGE_REPO_NAME }}"; then
+            echo "Image successfully pulled!"
             echo "IMAGE_EXISTS=true" >> $GITHUB_ENV
           else
-            echo "::error::Image does not exist"
+            echo "::error::Failed to pull the image"
             echo "IMAGE_EXISTS=false" >> $GITHUB_ENV
           fi
         continue-on-error: true
