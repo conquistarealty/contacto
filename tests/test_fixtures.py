@@ -1,6 +1,5 @@
 """Test the fixtures used in the tests."""
 
-import urllib.request
 from pathlib import Path
 from typing import Tuple
 
@@ -18,6 +17,7 @@ def check_files_subset(source_dir: Path, webfiles: Tuple[str, ...]) -> bool:
     return webfiles_set.issubset(source_dir_set)
 
 
+@pytest.mark.fixture
 def test_websrc_in_project_dir(
     project_directory: Path, website_files: Tuple[str, ...]
 ) -> None:
@@ -25,11 +25,13 @@ def test_websrc_in_project_dir(
     assert check_files_subset(project_directory, website_files)
 
 
+@pytest.mark.fixture
 def test_websrc_in_temp_dir(temp_web_src: Path, website_files: Tuple[str, ...]) -> None:
     """Simply confirm that the website files are in the temp web source dir."""
     assert check_files_subset(temp_web_src, website_files)
 
 
+@pytest.mark.fixture
 def test_hello_world_sb(sb: BaseCase, sb_test_url: str) -> None:
     """Just test if SeleniumBase can work on hello world example from docs."""
     # open the browser to the login example page
@@ -49,16 +51,37 @@ def test_hello_world_sb(sb: BaseCase, sb_test_url: str) -> None:
     sb.save_screenshot_to_logs()
 
 
-def test_immutable_server_up(immutable_website_url: str) -> None:
-    """Simply test that the web server for the project directory is up and normal."""
-    # attempt to reach domain
-    try:
-        # get response from request
-        response = urllib.request.urlopen(immutable_website_url)
+@pytest.mark.flask
+@pytest.mark.fixture
+def test_index_route(project_web_app):
+    """Test the index route."""
+    client = project_web_app.test_client()
+    response = client.get("/")
+    assert response.status_code == 200
 
-        # check status code is 200
-        assert response.getcode() == 200
 
-    except urllib.error.URLError:
-        # notify failure to reach
-        pytest.fail(f"Could not reach domain {immutable_website_url:!r}")
+@pytest.mark.flask
+@pytest.mark.fixture
+def test_other_root_files_route(project_web_app):
+    """Test the route for serving other root files."""
+    client = project_web_app.test_client()
+    response = client.get("/config.json")
+    assert response.status_code == 200
+
+
+@pytest.mark.flask
+@pytest.mark.fixture
+def test_serve_styles_route(project_web_app):
+    """Test the route for serving CSS files."""
+    client = project_web_app.test_client()
+    response = client.get("/styles/form.css")
+    assert response.status_code == 200
+
+
+@pytest.mark.flask
+@pytest.mark.fixture
+def test_serve_scripts_route(project_web_app):
+    """Test the route for serving JavaScript files."""
+    client = project_web_app.test_client()
+    response = client.get("/scripts/form.js")
+    assert response.status_code == 200

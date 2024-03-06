@@ -3,9 +3,7 @@
 import json
 import os
 import shutil
-import signal
-import subprocess
-import time
+import threading
 from pathlib import Path
 from typing import Any
 from typing import Dict
@@ -13,6 +11,8 @@ from typing import Generator
 from typing import Tuple
 
 import pytest
+from flask import Flask
+from flask import send_from_directory
 
 
 def pytest_configure(config):
@@ -20,31 +20,47 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "schema: custom marker for schema tests.")
     config.addinivalue_line("markers", "fixture: custom marker for fixture tests.")
     config.addinivalue_line("markers", "website: custom marker for website tests.")
+    config.addinivalue_line("markers", "flask: custom marker for flask server tests.")
 
 
-def start_http_server(project_directory: Path, port: str) -> subprocess.Popen:
-    """Start a simple HTTP server in the project directory path."""
-    # start the HTTP server as a subprocess
-    server_process = subprocess.Popen(
-        ["python", "-m", "http.server", port],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        preexec_fn=os.setsid,  # use os.setsid to create a new process group
-        cwd=project_directory,
-    )
+def build_flask_app(serve_directory: Path, port: int) -> Flask:
+    """Assembles Flask app to serve static site."""
+    # instantiate app
+    app = Flask(__name__)
 
-    # wait for the server to start
-    time.sleep(2)
+    # update the port
+    app.config["PORT"] = port
 
-    return server_process
+    # define routes
+    @app.route("/")
+    def index():
+        """Serve the index file in the project dir."""
+        return send_from_directory(serve_directory, "index.html")
 
+    @app.route("/<path:path>")
+    def other_root_files(path):
+        """Serve any other files (e.g. config.json) from the project dir."""
+        return send_from_directory(serve_directory, path)
 
-def stop_http_server(server_process: subprocess.Popen) -> None:
-    """Stop the HTTP server."""
-    # Send SIGTERM to the process group
-    os.killpg(os.getpgid(server_process.pid), signal.SIGTERM)
-    server_process.wait(timeout=2)
+    @app.route("/styles/<path:path>")
+    def serve_styles(path):
+        """Send any CSS files from the temp dir."""
+        css_file = os.path.join("styles", path)
+        if os.path.exists(os.path.join(serve_directory, css_file)):
+            return send_from_directory(serve_directory, css_file)
+        else:
+            return "CSS file not found\n", 404
+
+    @app.route("/scripts/<path:path>")
+    def serve_scripts(path):
+        """Send any JavaScript files from the temp dir."""
+        js_file = os.path.join("scripts", path)
+        if os.path.exists(os.path.join(serve_directory, js_file)):
+            return send_from_directory(serve_directory, js_file)
+        else:
+            return "JavaScript file not found\n", 404
+
+    return app
 
 
 @pytest.fixture(scope="session")
@@ -64,20 +80,24 @@ def project_directory() -> Path:
 
 
 @pytest.fixture(scope="session")
-def immutable_website_url(request, project_directory: Path) -> str:
-    """Fixture to start a simple HTTP server in the project directory path."""
-    # set the port
-    port = "8000"
+def project_web_app(project_directory: Path):
+    """Create a Flask app for testing with the website source."""
+    return build_flask_app(project_directory, 5000)
 
-    # Start the HTTP server
-    server_process = start_http_server(project_directory, port)
 
-    # Define a finalizer to stop the server
-    def finalize():
-        stop_http_server(server_process)
+@pytest.fixture(scope="session")
+def live_project_web_app_url(request, project_web_app: Flask):
+    """Runs Flask app for project directory in a thread."""
+    # launch Flask app for projecf dir in thread
+    thread = threading.Thread(target=project_web_app.run)
+    thread.daemon = True
+    thread.start()
 
-    request.addfinalizer(finalize)
+    # get port
+    assert "PORT" in project_web_app.config, "PORT key not set"
+    port = project_web_app.config.get("PORT")
 
+    # get url
     return f"http://localhost:{port}"
 
 
