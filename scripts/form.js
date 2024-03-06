@@ -107,7 +107,7 @@ function copyEmailToClipboard(email) {
  }
 
 // Set form action (mailto) from config.json
-fetch('/config.json')
+fetch('config.json')
 .then(response => response.json())
 .then(data => {
     // Alert user if email key not found
@@ -156,7 +156,7 @@ fetch('/config.json')
 });
 
 // Fetching and populating form fields from config.json
-fetch('/config.json')
+fetch('config.json')
 .then(response => {
     // Alert user if config.json unreachable
     if (!response.ok) {
