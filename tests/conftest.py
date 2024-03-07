@@ -12,6 +12,7 @@ from typing import Tuple
 
 import pytest
 from flask import Flask
+from flask import request
 from flask import send_from_directory
 
 
@@ -21,6 +22,29 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "fixture: custom marker for fixture tests.")
     config.addinivalue_line("markers", "website: custom marker for website tests.")
     config.addinivalue_line("markers", "flask: custom marker for flask server tests.")
+
+
+def create_temp_websrc_dir(src: Path, dst: Path, src_files: Tuple[str, ...]) -> Path:
+    """Create and populate a temporary directory with static web source files."""
+    # create new destination subdir
+    sub_dir = dst / "web_src"
+    sub_dir.mkdir()
+
+    # copy each file or directory from the project directory to the temporary directory
+    for item_name in src_files:
+        # get the path to the source file or directory in the project directory
+        source_item_path = src / item_name
+
+        # check if directory
+        if source_item_path.is_dir():
+            # if the item is a directory, recursively copy it
+            shutil.copytree(source_item_path, sub_dir / item_name)
+
+        else:
+            # if the item is a file, copy it
+            shutil.copy(source_item_path, sub_dir)
+
+    return sub_dir
 
 
 def build_flask_app(serve_directory: Path, port: int) -> Flask:
@@ -60,7 +84,45 @@ def build_flask_app(serve_directory: Path, port: int) -> Flask:
         else:
             return "JavaScript file not found\n", 404
 
+    @app.route("/submit", methods=["POST"])
+    def submit_form():
+        # access form data submitted by the client
+        form_data = request.form
+
+        # print the form data
+        print("Form Data:", form_data)
+
+        return "Form submitted successfully!\n"
+
     return app
+
+
+def run_threaded_flask_app(app: Flask) -> None:
+    """Run a Flask app using threading."""
+    # launch Flask app for projecf dir in thread
+    thread = threading.Thread(target=app.run)
+    thread.daemon = True
+    thread.start()
+
+
+def load_config_file(directory: Path) -> Dict[str, Any]:
+    """Load the JSON config file at directory."""
+    # open the config file in the project dir
+    with open(directory / "config.json", "r", encoding="utf-8") as config:
+        # load the JSON data into dict
+        return json.load(config)
+
+
+def update_form_backend_config(
+    config: Dict[str, Any], src_path: Path, port: int
+) -> None:
+    """Set the form backend url to testing server url."""
+    # update form backend
+    config["form_backend_url"] = f"http://localhost:{port}/submit"
+
+    # Writing dictionary to JSON file with pretty printing (2 spaces indentation)
+    with open(src_path / "config.json", "w") as json_file:
+        json.dump(config, json_file, indent=2)
 
 
 @pytest.fixture(scope="session")
@@ -80,56 +142,41 @@ def project_directory() -> Path:
 
 
 @pytest.fixture(scope="session")
-def project_web_app(project_directory: Path):
-    """Create a Flask app for testing with the website source."""
-    return build_flask_app(project_directory, 5000)
-
-
-@pytest.fixture(scope="session")
-def live_project_web_app_url(request, project_web_app: Flask):
-    """Runs Flask app for project directory in a thread."""
-    # launch Flask app for projecf dir in thread
-    thread = threading.Thread(target=project_web_app.run)
-    thread.daemon = True
-    thread.start()
-
-    # get port
-    assert "PORT" in project_web_app.config, "PORT key not set"
-    port = project_web_app.config.get("PORT")
-
-    # get url
-    return f"http://localhost:{port}"
-
-
-@pytest.fixture(scope="session")
 def website_files() -> Tuple[str, ...]:
     """Declare the files necessary for serving the website."""
     # define the files and directories to copy from the project directory
     return ("index.html", "config.json", "styles", "scripts")
 
 
+@pytest.fixture(scope="session")
+def session_tmp_dir(tmp_path_factory) -> Path:
+    """Uses temporary path factory to create a session-scoped temp path."""
+    # create a temporary directory using tmp_path_factory
+    return tmp_path_factory.mktemp("session_temp_dir")
+
+
+@pytest.fixture(scope="session")
+def session_websrc_tmp_dir(
+    project_directory: Path, session_tmp_dir: Path, website_files: Tuple[str, ...]
+) -> Generator[Path, None, None]:
+    """Create a per-session copy of the website source code for editing."""
+    # create a temporary directory
+    temp_dir = create_temp_websrc_dir(project_directory, session_tmp_dir, website_files)
+
+    # provide the temporary directory path to the test function
+    yield temp_dir
+
+    # remove the temporary directory and its contents
+    shutil.rmtree(temp_dir)
+
+
 @pytest.fixture(scope="function")
-def temp_web_src(
+def function_websrc_tmp_dir(
     project_directory: Path, tmp_path: Path, website_files: Tuple[str, ...]
 ) -> Generator[Path, None, None]:
-    """Create a copy of the website source code for editing."""
+    """Create a per-function copy of the website source code for editing."""
     # create a temporary directory
-    temp_dir = tmp_path / "web_src"
-    temp_dir.mkdir()
-
-    # copy each file or directory from the project directory to the temporary directory
-    for item_name in website_files:
-        # get the path to the source file or directory in the project directory
-        source_item_path = project_directory / item_name
-
-        # check if directory
-        if source_item_path.is_dir():
-            # if the item is a directory, recursively copy it
-            shutil.copytree(source_item_path, temp_dir / item_name)
-
-        else:
-            # if the item is a file, copy it
-            shutil.copy(source_item_path, temp_dir)
+    temp_dir = create_temp_websrc_dir(project_directory, tmp_path, website_files)
 
     # provide the temporary directory path to the test function
     yield temp_dir
@@ -141,7 +188,32 @@ def temp_web_src(
 @pytest.fixture(scope="session")
 def default_site_config(project_directory: Path) -> Dict[str, Any]:
     """Load the default config.json file."""
-    # open the config file in the project dir
-    with open(project_directory / "config.json", "r", encoding="utf-8") as config:
-        # load the JSON data into dict
-        return json.load(config)
+    return load_config_file(project_directory)
+
+
+@pytest.fixture(scope="session")
+def session_web_app(
+    default_site_config: Dict[str, Any], session_websrc_tmp_dir: Path
+) -> Flask:
+    """Create a session-scoped Flask app for testing with the website source."""
+    # set port
+    port = 5000
+
+    # now update config.json with new backend url
+    update_form_backend_config(default_site_config, session_websrc_tmp_dir, port)
+
+    # create app
+    return build_flask_app(session_websrc_tmp_dir, port)
+
+
+@pytest.fixture(scope="session")
+def live_session_web_app_url(session_web_app: Flask) -> str:
+    """Runs session-scoped Flask app in a thread."""
+    # start threaded app
+    run_threaded_flask_app(session_web_app)
+
+    # get port
+    port = session_web_app.config.get("PORT")
+
+    # get url
+    return f"http://localhost:{port}"

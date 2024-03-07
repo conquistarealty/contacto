@@ -1,10 +1,14 @@
 """Test the fixtures used in the tests."""
 
+import json
 from pathlib import Path
 from typing import Tuple
 
 import pytest
+from flask import Flask
 from seleniumbase import BaseCase
+
+from tests.conftest import load_config_file
 
 
 def check_files_subset(source_dir: Path, webfiles: Tuple[str, ...]) -> bool:
@@ -26,9 +30,11 @@ def test_websrc_in_project_dir(
 
 
 @pytest.mark.fixture
-def test_websrc_in_temp_dir(temp_web_src: Path, website_files: Tuple[str, ...]) -> None:
+def test_websrc_in_temp_dir(
+    session_websrc_tmp_dir: Path, website_files: Tuple[str, ...]
+) -> None:
     """Simply confirm that the website files are in the temp web source dir."""
-    assert check_files_subset(temp_web_src, website_files)
+    assert check_files_subset(session_websrc_tmp_dir, website_files)
 
 
 @pytest.mark.fixture
@@ -53,35 +59,70 @@ def test_hello_world_sb(sb: BaseCase, sb_test_url: str) -> None:
 
 @pytest.mark.flask
 @pytest.mark.fixture
-def test_index_route(project_web_app):
+def test_index_route(session_web_app: Flask) -> None:
     """Test the index route."""
-    client = project_web_app.test_client()
+    client = session_web_app.test_client()
     response = client.get("/")
     assert response.status_code == 200
 
 
 @pytest.mark.flask
 @pytest.mark.fixture
-def test_other_root_files_route(project_web_app):
+def test_other_root_files_route(session_web_app: Flask) -> None:
     """Test the route for serving other root files."""
-    client = project_web_app.test_client()
+    client = session_web_app.test_client()
     response = client.get("/config.json")
     assert response.status_code == 200
 
 
 @pytest.mark.flask
 @pytest.mark.fixture
-def test_serve_styles_route(project_web_app):
+def test_serve_styles_route(session_web_app: Flask) -> None:
     """Test the route for serving CSS files."""
-    client = project_web_app.test_client()
+    client = session_web_app.test_client()
     response = client.get("/styles/form.css")
     assert response.status_code == 200
 
 
 @pytest.mark.flask
 @pytest.mark.fixture
-def test_serve_scripts_route(project_web_app):
+def test_serve_scripts_route(session_web_app: Flask) -> None:
     """Test the route for serving JavaScript files."""
-    client = project_web_app.test_client()
+    client = session_web_app.test_client()
     response = client.get("/scripts/form.js")
     assert response.status_code == 200
+
+
+@pytest.mark.flask
+@pytest.mark.fixture
+def test_port_in_app_config(session_web_app: Flask) -> None:
+    """Confirm port has been set in Flask app config."""
+    assert "PORT" in session_web_app.config, "PORT key not set"
+
+
+@pytest.mark.flask
+@pytest.mark.fixture
+def test_session_config_form_backend_updated(
+    session_websrc_tmp_dir: Path, session_web_app: Flask
+) -> None:
+    """Make sure config file has been updated with url."""
+    # load config file
+    config = load_config_file(session_websrc_tmp_dir)
+
+    # get config
+    client = session_web_app.test_client()
+    response = client.get("/config.json")
+
+    # verify the response status code
+    assert response.status_code == 200
+
+    # convert the response content to JSON
+    json_data = json.loads(response.data)
+
+    # check that key is in config
+    key = "form_backend_url"
+    assert key in json_data
+    assert key in config
+
+    # check configs match
+    assert config[key] == json_data[key]

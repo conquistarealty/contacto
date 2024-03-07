@@ -16,10 +16,10 @@ def test_config_schema(default_site_config: Dict[str, Any]) -> None:
 
 
 @pytest.mark.website
-def test_normal_display(sb: BaseCase, live_project_web_app_url: str) -> None:
+def test_normal_display(sb: BaseCase, live_session_web_app_url: str) -> None:
     """Simply tests that the website is displaying normally."""
     # open with browser
-    sb.open(live_project_web_app_url)
+    sb.open(live_session_web_app_url)
 
     # verify that the container element is visible
     sb.assert_element_visible(".container")
@@ -36,11 +36,11 @@ def test_normal_display(sb: BaseCase, live_project_web_app_url: str) -> None:
 
 @pytest.mark.website
 def test_email_in_instructions(
-    sb: BaseCase, live_project_web_app_url: str, default_site_config: Dict[str, Any]
+    sb: BaseCase, live_session_web_app_url: str, default_site_config: Dict[str, Any]
 ) -> None:
     """Test that email is dynamically added to instructions."""
     # temp website src
-    sb.open(live_project_web_app_url)
+    sb.open(live_session_web_app_url)
 
     # get instructions text
     instruct_text = sb.get_text("#instructions")
@@ -51,14 +51,36 @@ def test_email_in_instructions(
 
 @pytest.mark.website
 def test_custom_title_works(
-    sb: BaseCase, live_project_web_app_url: str, default_site_config: Dict[str, Any]
+    sb: BaseCase, live_session_web_app_url: str, default_site_config: Dict[str, Any]
 ) -> None:
     """Test that title is dynamically updated from config.json."""
     # temp website src
-    sb.open(live_project_web_app_url)
+    sb.open(live_session_web_app_url)
 
     # get the title of the webpage
     title = sb.get_title()
 
     # check email in text
     assert default_site_config["title"] == title
+
+
+@pytest.mark.website
+def test_form_backend_updated(sb: BaseCase, live_session_web_app_url: str) -> None:
+    """Check that the form backend url has been updated correctly."""
+    # open the webpage
+    sb.open(live_session_web_app_url)
+
+    # find the form element
+    form_element = sb.get_element("form")
+
+    # make sure it exists
+    assert form_element is not None
+
+    # get the value of the "action" attribute of the form element
+    form_target = form_element.get_attribute("action")
+
+    # make sure it exists
+    assert form_target is not None
+
+    # now check that it is the right url
+    assert form_target == live_session_web_app_url + "/submit"
