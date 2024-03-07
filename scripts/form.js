@@ -234,12 +234,14 @@ fetch('config.json')
     const send_button = document.createElement('button');
     send_button.setAttribute('type', 'submit');
     send_button.textContent = 'Send';
+    send_button.setAttribute('id', 'send_button'); // Add id attribute
     form.appendChild(send_button);
 
     // Setup form download button
     const download_html_button = document.createElement('button');
     download_html_button.setAttribute('type', 'button');
     download_html_button.textContent = 'Download Form';
+    download_html_button.setAttribute('id', 'download_button'); // Add id attribute
 
     // Add event to listen for click
     download_html_button.addEventListener('click', () => {
