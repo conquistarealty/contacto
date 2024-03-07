@@ -12,8 +12,10 @@ from typing import Tuple
 
 import pytest
 from flask import Flask
+from flask import render_template
 from flask import request
 from flask import send_from_directory
+from selenium.webdriver.common.keys import Keys
 
 
 def pytest_configure(config):
@@ -89,11 +91,13 @@ def build_flask_app(serve_directory: Path, port: int, submit_route: str) -> Flas
         # access form data submitted by the client
         form_data = request.form
 
-        # print the form data
-        print("Form Data:", form_data)
+        # log data
+        print(request.form)
 
-        return "Form submitted successfully!\n"
+        # render the template with the form data
+        return render_template("form_response_template.html", form_data=form_data)
 
+    # return configured and route decorated Flask app
     return app
 
 
@@ -123,6 +127,28 @@ def update_form_backend_config(
     # Writing dictionary to JSON file with pretty printing (2 spaces indentation)
     with open(src_path / "config.json", "w") as json_file:
         json.dump(config, json_file, indent=2)
+
+
+@pytest.fixture(scope="session")
+def form_inputs() -> Dict[str, Any]:
+    """Defines the values to be submitted for each input type during form tests."""
+    return {
+        "email": "foo@bar.com",
+        "date": {"date": "01012000"},
+        "datetime-local": {
+            "date": "01012000",
+            "tab": Keys.TAB,
+            "time": "1200",
+            "period": "AM",
+        },
+        "number": "42",
+        "selectbox": None,
+        "tel": "18005554444",
+        "text": "Sample text for input of type=text.",
+        "textarea": "Sample text for Textarea.",
+        "time": {"time": "1200", "period": "AM"},
+        "url": "http://example.com",
+    }
 
 
 @pytest.fixture(scope="session")

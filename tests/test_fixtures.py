@@ -2,6 +2,8 @@
 
 import json
 from pathlib import Path
+from typing import Any
+from typing import Dict
 from typing import Tuple
 
 import pytest
@@ -35,6 +37,23 @@ def test_websrc_in_temp_dir(
 ) -> None:
     """Simply confirm that the website files are in the temp web source dir."""
     assert check_files_subset(session_websrc_tmp_dir, website_files)
+
+
+@pytest.mark.fixture
+def test_config_keys_in_form_inputs(
+    default_site_config: Dict[str, Any], form_inputs: Dict[str, Any]
+) -> None:
+    """Check that keys from config.json are present in form input testing fixture."""
+    # get types from questions section of config.json
+    question_types = [q["type"] for q in default_site_config["questions"]]
+
+    # check config question types missing form inputs (if any)
+    missing_keys = set(question_types) - set(form_inputs)
+
+    # no missing keys
+    assert (
+        not missing_keys
+    ), f"Keys found in config.json are absent from test inputs : {missing_keys}"
 
 
 @pytest.mark.fixture
@@ -91,6 +110,32 @@ def test_serve_scripts_route(session_web_app: Flask) -> None:
     client = session_web_app.test_client()
     response = client.get("/scripts/form.js")
     assert response.status_code == 200
+
+
+@pytest.mark.flask
+@pytest.mark.fixture
+def test_submit_form_route(session_web_app: Flask, submit_route: str) -> None:
+    """Test the route for submitting a form."""
+    # get client
+    client = session_web_app.test_client()
+
+    # simulate a form submission
+    form_data = {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "message": "This is a test message.",
+    }
+    response = client.post(submit_route, data=form_data)
+
+    # assert that the response status code is 200 (OK)
+    assert response.status_code == 200
+
+    # get content
+    content = response.data.decode("utf-8")
+
+    # Optionally, you can check the response content
+    assert "Contact Form Response" in content
+    assert all(form_data[key] in content for key in form_data)
 
 
 @pytest.mark.flask

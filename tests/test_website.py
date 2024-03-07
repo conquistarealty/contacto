@@ -1,12 +1,164 @@
 """Test all features of website."""
 
+import json
+from datetime import datetime
 from typing import Any
 from typing import Dict
+from typing import Generator
+from typing import Optional
+from typing import Tuple
 
 import pytest
+from bs4 import BeautifulSoup
+from flask import Flask
+from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
 from seleniumbase import BaseCase
 
 from tests.schema import check_config_schema
+
+
+def convert_to_isoformat(
+    date: Optional[str] = None,
+    time: Optional[str] = None,
+    period: Optional[str] = None,
+    **kwargs,
+) -> str:
+    """Converts a datetime-local test input into ISO 8601 format."""
+    # Initialize variables for date and time objects
+    date_obj = None
+    time_obj = None
+
+    # Check for valid input
+    if date is None and time is None:
+        raise ValueError("Either date or time must be provided")
+
+    # Convert date string to datetime object
+    if date is not None:
+        date_obj = datetime.strptime(date, "%d%m%Y")
+
+    # Convert time string to datetime object
+    if time is not None:
+        if period is None:
+            raise ValueError("Period (AM/PM) must be provided for time conversion")
+        time_str = f"{time} {period}"
+        time_obj = datetime.strptime(time_str, "%I%M %p")
+
+    # Determine final string based on date and time presence
+    final_str = ""
+    if date_obj and time_obj:
+        final_str = datetime.combine(date_obj.date(), time_obj.time()).strftime(
+            "%Y-%m-%dT%H:%M"
+        )
+    elif date_obj:
+        final_str = date_obj.strftime("%Y-%m-%d")
+    elif time_obj:
+        final_str = time_obj.strftime("%H:%M")
+
+    return final_str
+
+
+def select_options(question: Dict[str, Any]) -> str:
+    """Chose selection from options."""
+    # count number of options NOT disabled
+    for option in question["options"]:
+        # check if disabled present
+        if option.get("disabled", False):
+            # skip disabled options
+            continue
+
+        else:
+            # end
+            break
+
+    # get the first valid option
+    return option["value"]
+
+
+def fill_out_form(
+    form_element: WebElement, config: Dict[str, Any], form_inputs: Dict[str, Any]
+) -> Generator[Tuple[str, str], None, None]:
+    """Programmatically fill out form and yield name/value pairs."""
+    # loop over questions
+    for question in config["questions"]:
+        # now get element with name
+        input_element = form_element.find_element(By.NAME, question["name"])
+
+        # get tag element type
+        tag_name = input_element.tag_name.lower()
+
+        # control flow for different types
+        if tag_name == "input" or tag_name == "textarea":
+            # get the type
+            input_type = input_element.get_attribute("type")
+
+            # check input_type
+            assert input_type is not None
+
+            # get test value for input type
+            test_value = form_inputs[input_type]
+
+            # check if date/time dict
+            if isinstance(test_value, dict):
+                # now loop over multiple input steps
+                for sub_input in test_value.values():
+                    # send it
+                    input_element.send_keys(sub_input)
+
+                # now update test value
+                test_value = convert_to_isoformat(**test_value)
+
+            else:
+                # just normal
+                input_element.send_keys(test_value)
+
+            # generate
+            yield question["name"], test_value
+
+        elif tag_name == "select":
+            # get sample selection from options
+            sample_option = select_options(question)
+
+            # find all option elements within the select element
+            option_elements = input_element.find_elements(By.TAG_NAME, "option")
+
+            # loop through the option elements and select the desired one
+            for option_element in option_elements:
+                # basically get first option that is not empty (i.e. a default)
+                if option_element.get_attribute("value") == sample_option:
+                    # click it ...
+                    option_element.click()
+
+            # generate
+            yield question["name"], sample_option
+
+
+def extract_received_form_input(
+    response_html: str,
+) -> Generator[Tuple[str, str], None, None]:
+    """Extract input received from form submission."""
+    # parse the HTML content with BeautifulSoup
+    soup = BeautifulSoup(response_html, "html.parser")
+
+    # find the container element
+    container = soup.find("div", class_="container")
+
+    # find all label elements within the container
+    labels = container.find_all("label")
+
+    # iterate over the labels to retrieve the key-value pairs
+    for label in labels:
+        # get label as key
+        key = label.text.strip(":")
+
+        # now get immediate value element
+        value_element = label.find_next_sibling("p")
+
+        # clean it
+        received_value = value_element.text.strip()
+
+        # yield the key/value pair
+        yield key, received_value
 
 
 @pytest.mark.website
@@ -86,3 +238,63 @@ def test_form_backend_updated(
 
     # now check that it is the right url
     assert form_target == live_session_web_app_url + submit_route
+
+
+@pytest.mark.website
+def test_form_submission(
+    sb: BaseCase,
+    live_session_web_app_url: str,
+    form_inputs: Dict[str, Any],
+    session_web_app: Flask,
+) -> None:
+    """Check that the given form upon completion can be succesfully submitted."""
+    # get config file
+    client = session_web_app.test_client()
+    response = client.get("/config.json")
+
+    # convert the response content to JSON
+    config = json.loads(response.data)
+
+    # open the webpage
+    sb.open(live_session_web_app_url)
+
+    # find the form element
+    form_element = sb.get_element("form")
+
+    # fill out form
+    submitted_input = {
+        k: v for k, v in fill_out_form(form_element, config, form_inputs)
+    }
+
+    # get send button ...
+    send_button = form_element.find_element(By.ID, "send_button")
+
+    # ... now click it
+    send_button.click()
+
+    # check that the form was submitted
+    sb.assert_text("Contact Form Response")
+
+    # get the HTML content of the response
+    response_html = sb.get_page_source()
+
+    # get received input from Flask response html
+    received_input = {k: v for k, v in extract_received_form_input(response_html)}
+
+    # check keys are same
+    missing_keys = set(submitted_input) - set(received_input)
+    assert not missing_keys, f"Keys are not the same: {missing_keys}"
+
+    # now check values
+    for key in submitted_input.keys():
+        # get values
+        value1 = submitted_input[key]
+        value2 = received_input[key]
+
+        # check
+        assert (
+            value1 == value2
+        ), f"Submitted input: {value1} differs from received: {value2}"
+
+    # save screenshot for confirmation
+    sb.save_screenshot_to_logs()
