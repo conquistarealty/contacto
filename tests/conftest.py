@@ -47,7 +47,7 @@ def create_temp_websrc_dir(src: Path, dst: Path, src_files: Tuple[str, ...]) -> 
     return sub_dir
 
 
-def build_flask_app(serve_directory: Path, port: int) -> Flask:
+def build_flask_app(serve_directory: Path, port: int, submit_route: str) -> Flask:
     """Assembles Flask app to serve static site."""
     # instantiate app
     app = Flask(__name__)
@@ -84,7 +84,7 @@ def build_flask_app(serve_directory: Path, port: int) -> Flask:
         else:
             return "JavaScript file not found\n", 404
 
-    @app.route("/submit", methods=["POST"])
+    @app.route(submit_route, methods=["POST"])
     def submit_form():
         # access form data submitted by the client
         form_data = request.form
@@ -192,8 +192,14 @@ def default_site_config(project_directory: Path) -> Dict[str, Any]:
 
 
 @pytest.fixture(scope="session")
+def submit_route() -> str:
+    """Defines the route used for the form submission testing."""
+    return "/submit"
+
+
+@pytest.fixture(scope="session")
 def session_web_app(
-    default_site_config: Dict[str, Any], session_websrc_tmp_dir: Path
+    default_site_config: Dict[str, Any], session_websrc_tmp_dir: Path, submit_route: str
 ) -> Flask:
     """Create a session-scoped Flask app for testing with the website source."""
     # set port
@@ -203,7 +209,7 @@ def session_web_app(
     update_form_backend_config(default_site_config, session_websrc_tmp_dir, port)
 
     # create app
-    return build_flask_app(session_websrc_tmp_dir, port)
+    return build_flask_app(session_websrc_tmp_dir, port, submit_route)
 
 
 @pytest.fixture(scope="session")

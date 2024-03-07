@@ -65,7 +65,9 @@ def test_custom_title_works(
 
 
 @pytest.mark.website
-def test_form_backend_updated(sb: BaseCase, live_session_web_app_url: str) -> None:
+def test_form_backend_updated(
+    sb: BaseCase, live_session_web_app_url: str, submit_route: str
+) -> None:
     """Check that the form backend url has been updated correctly."""
     # open the webpage
     sb.open(live_session_web_app_url)
@@ -83,4 +85,4 @@ def test_form_backend_updated(sb: BaseCase, live_session_web_app_url: str) -> No
     assert form_target is not None
 
     # now check that it is the right url
-    assert form_target == live_session_web_app_url + "/submit"
+    assert form_target == live_session_web_app_url + submit_route
