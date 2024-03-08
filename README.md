@@ -67,7 +67,7 @@ are listed below:
 + `time`
 + `url`
 
-Information describing these types can be found in the **MDN Input Element Docs**,^[1]
+Information describing these types can be found in the **MDN Input Element Docs**,[^1]
 except for `selectbox` and `textarea` which are custom *input types*.
 
 #### Custom Input Types
@@ -179,4 +179,4 @@ Here we will show some **common use cases** for the `Makefile`:
   can then run a *specific subset* of tests (**e.g.** `pytest -m website`).
 
 ## References
-+ [^1]: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#input_types
+[^1]: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#input_types
