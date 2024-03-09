@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Any
 from typing import Dict
 from typing import Generator
+from typing import List
 from typing import Optional
 from typing import Tuple
 
@@ -16,6 +17,11 @@ from selenium.webdriver.remote.webelement import WebElement
 from seleniumbase import BaseCase
 
 from tests.schema import check_config_schema
+
+
+def any_required_questions(questions: List[Dict[str, Any]]) -> bool:
+    """Determines if any questions are required."""
+    return any(q["required"] for q in questions)
 
 
 def convert_to_isoformat(
@@ -295,6 +301,49 @@ def test_form_submission(
         assert (
             value1 == value2
         ), f"Submitted input: {value1} differs from received: {value2}"
+
+    # save screenshot for confirmation
+    sb.save_screenshot_to_logs()
+
+
+@pytest.mark.website
+def test_form_required_constraint(
+    sb: BaseCase, live_session_web_app_url: str, session_web_app: Flask
+) -> None:
+    """Check form denies submission if a required question is unanswered."""
+    # get config file
+    client = session_web_app.test_client()
+    response = client.get("/config.json")
+
+    # convert the response content to JSON
+    config = json.loads(response.data)
+
+    # open the webpage
+    sb.open(live_session_web_app_url)
+
+    # find the form element
+    form_element = sb.get_element("form")
+
+    # get send button ...
+    send_button = form_element.find_element(By.ID, "send_button")
+
+    # store page source before
+    page_source = {"before": sb.get_page_source()}
+
+    # ... now click it
+    send_button.click()
+
+    # now store it after
+    page_source["after"] = sb.get_page_source()
+
+    # now check appropriate behavior
+    if any_required_questions(config["questions"]):
+        # should NOT see contact form response
+        assert page_source["before"] == page_source["after"]
+
+    else:
+        # should see contact form response
+        sb.assert_text("Contact Form Response")
 
     # save screenshot for confirmation
     sb.save_screenshot_to_logs()
