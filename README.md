@@ -13,6 +13,15 @@ A formal discussion or negotiation between parties, especially enemies, typicall
 **Example Sentence:**
 The warring factions agreed to a parley at the neutral ground to seek a diplomatic solution to their long-standing conflict.
 
+## Introduction
+The motivation behind this software is simple: to develop a completely static
+**HTML Form** that can be deployed anywhere (including on **GitHub Pages**), to allow
+for simple *configuration* (i.e. no need to edit the **web source** directly) using
+a **JSON** file (`config.json`), and for the software to be **RIGOROUSLY** tested
+(using `pytest`) to prove the features work. That is what `Parley` is about: a
+_"once for all"_ solution for those who need a *simple*, *testable*, and *stable*
+*form solution* **now**.
+
 ## Usage
 Here we outline the `Parley` software's *intended* use. Specifically we will go over
 the `config.json` schema and what is *supported* vs. *disallowed*.
