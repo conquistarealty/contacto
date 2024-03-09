@@ -2,6 +2,7 @@
 
 import json
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import Generator
@@ -22,6 +23,13 @@ from tests.schema import check_config_schema
 def any_required_questions(questions: List[Dict[str, Any]]) -> bool:
     """Determines if any questions are required."""
     return any(q["required"] for q in questions)
+
+
+def read_html_file(file_path: Path) -> str:
+    """Open an HTML file and return contents as string."""
+    with open(file_path, "r") as file:
+        html_content = file.read()
+    return html_content
 
 
 def convert_to_isoformat(
@@ -154,8 +162,8 @@ def extract_received_form_input(
 
     # iterate over the labels to retrieve the key-value pairs
     for label in labels:
-        # get label as key
-        key = label.text.strip(":")
+        # get label's "for" attribute as key
+        key = label["for"]
 
         # now get immediate value element
         value_element = label.find_next_sibling("p")
@@ -344,6 +352,69 @@ def test_form_required_constraint(
     else:
         # should see contact form response
         sb.assert_text("Contact Form Response")
+
+    # save screenshot for confirmation
+    sb.save_screenshot_to_logs()
+
+
+@pytest.mark.website
+def test_form_download(
+    sb: BaseCase,
+    live_session_web_app_url: str,
+    session_web_app: Flask,
+    form_inputs: Dict[str, Any],
+) -> None:
+    """Check that the given form upon completion can be succesfully downloaded."""
+    # get config file
+    client = session_web_app.test_client()
+    response = client.get("/config.json")
+
+    # convert the response content to JSON
+    config = json.loads(response.data)
+
+    # open the webpage
+    sb.open(live_session_web_app_url)
+
+    # find the form element
+    form_element = sb.get_element("form")
+
+    # fill out form
+    submitted_input = {
+        k: v for k, v in fill_out_form(form_element, config, form_inputs)
+    }
+
+    # get download button ...
+    download_button = form_element.find_element(By.ID, "download_button")
+
+    # ... now click it ...
+    download_button.click()
+
+    # ... and make sure file is present in downloads dir
+    sb.assert_downloaded_file("contact_form_response.html")
+
+    # now get path to downloaded form response
+    download_path = sb.get_path_of_downloaded_file("contact_form_response.html")
+
+    # read HTML download file into string
+    download_html = read_html_file(sb.get_path_of_downloaded_file(download_path))
+
+    # get received input from Flask response html
+    received_input = {k: v for k, v in extract_received_form_input(download_html)}
+
+    # check keys are same
+    missing_keys = set(submitted_input) - set(received_input)
+    assert not missing_keys, f"Keys are not the same: {missing_keys}"
+
+    # now check values
+    for key in submitted_input.keys():
+        # get values
+        value1 = submitted_input[key]
+        value2 = received_input[key]
+
+        # check
+        assert (
+            value1 == value2
+        ), f"Submitted input: {value1} differs from received: {value2}"
 
     # save screenshot for confirmation
     sb.save_screenshot_to_logs()

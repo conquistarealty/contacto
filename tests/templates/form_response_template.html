@@ -29,7 +29,7 @@ label {
 <div class="container">
 <h2>Contact Form Response</h2>
 {% for key, value in form_data.items() %}
-    <label>{{ key }}:</label>
+    <label for="{{ key }}">{{ key }}:</label>
     <p>{{ value }}</p>
 {% endfor %}
 </div>

@@ -31,7 +31,7 @@ function generateHtmlContent(formData) {
 
     // Add form data to the HTML content
     for (const key in formData) {
-        htmlContent += `<label>${key}:</label>`;
+        htmlContent += `<label for="${key}">${key}:</label>`;
         // If the value is an array (multiple selections), format it as a list
         if (Array.isArray(formData[key])) {
             htmlContent += `<ul>`;
@@ -267,7 +267,7 @@ fetch('config.json')
             }
 
             // Store form data
-            formData[input.getAttribute('data-label')] = fieldValue;
+            formData[input.getAttribute('name')] = fieldValue;
         });
 
         if (valid) {
