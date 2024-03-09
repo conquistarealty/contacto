@@ -25,6 +25,32 @@ def any_required_questions(questions: List[Dict[str, Any]]) -> bool:
     return any(q["required"] for q in questions)
 
 
+def check_required_inputs_border_red(
+    red_outlined_required_html: str,
+) -> Generator[bool, None, None]:
+    """Check if all the required inputs are red outlined."""
+    # parse the HTML
+    soup = BeautifulSoup(red_outlined_required_html, "html.parser")
+
+    # find all input, textarea, and select elements
+    input_elements = soup.find_all(["input", "textarea", "select"])
+
+    # iterate through each input element
+    for element in input_elements:
+        # check if the 'required' attribute is present
+        required = "required" in element.attrs
+
+        # check if the border color is red
+        color = "red" in element.get("style", "")
+
+        if required:
+            # should be red outlined
+            yield required and color
+        else:
+            # should be left alone
+            yield not color
+
+
 def read_html_file(file_path: Path) -> str:
     """Open an HTML file and return contents as string."""
     with open(file_path, "r") as file:
@@ -315,7 +341,7 @@ def test_form_submission(
 
 
 @pytest.mark.website
-def test_form_required_constraint(
+def test_form_submission_required_constraint(
     sb: BaseCase, live_session_web_app_url: str, session_web_app: Flask
 ) -> None:
     """Check form denies submission if a required question is unanswered."""
@@ -415,6 +441,50 @@ def test_form_download(
         assert (
             value1 == value2
         ), f"Submitted input: {value1} differs from received: {value2}"
+
+    # save screenshot for confirmation
+    sb.save_screenshot_to_logs()
+
+
+@pytest.mark.website
+def test_form_download_required_constraint(
+    sb: BaseCase, live_session_web_app_url: str, session_web_app: Flask
+) -> None:
+    """Check form denies download if a required question is unanswered."""
+    # get config file
+    client = session_web_app.test_client()
+    response = client.get("/config.json")
+
+    # convert the response content to JSON
+    config = json.loads(response.data)
+
+    # open the webpage
+    sb.open(live_session_web_app_url)
+
+    # find the form element
+    form_element = sb.get_element("form")
+
+    # get send button ...
+    download_button = form_element.find_element(By.ID, "download_button")
+
+    # store page source before
+    page_source = {"before": sb.get_page_source()}
+
+    # check for required questions
+    required_questions_present = any_required_questions(config["questions"])
+
+    # ... now click it
+    download_button.click()
+
+    # check alert message
+    if required_questions_present:
+        sb.wait_for_and_accept_alert()
+
+    # now store it after
+    page_source["after"] = sb.get_page_source()
+
+    # should see red outlined required questions
+    assert all(check_required_inputs_border_red(page_source["after"]))
 
     # save screenshot for confirmation
     sb.save_screenshot_to_logs()
