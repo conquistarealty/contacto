@@ -32,13 +32,9 @@ function generateHtmlContent(formData) {
     // Add form data to the HTML content
     for (const key in formData) {
         htmlContent += `<label for="${key}">${key}:</label>`;
-        // If the value is an array (multiple selections), format it as a list
+        // If the value is an array (multiple selections), format it as comma-separated
         if (Array.isArray(formData[key])) {
-            htmlContent += `<ul>`;
-            formData[key].forEach(value => {
-                htmlContent += `<li>${value}</li>`;
-            });
-            htmlContent += `</ul>`;
+            htmlContent += `${formData[key].join(', ')}`;
         } else {
             htmlContent += `<p>${formData[key]}</p>`;
         }

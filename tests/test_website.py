@@ -17,6 +17,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from seleniumbase import BaseCase
 
+from tests.conftest import write_config_file
 from tests.schema import check_config_schema
 
 
@@ -487,4 +488,86 @@ def test_form_download_required_constraint(
     assert all(check_required_inputs_border_red(page_source["after"]))
 
     # save screenshot for confirmation
+    sb.save_screenshot_to_logs()
+
+
+@pytest.mark.debug
+@pytest.mark.feature
+def test_select_multiple_options(
+    sb: BaseCase,
+    live_function_web_app_url: str,
+    submit_route: str,
+    function_websrc_tmp_dir: Path,
+    function_web_app: Flask,
+    multiple_select_options_config: Dict[str, Any],
+) -> None:
+    """Confirm multiple options can be selected."""
+    # add form backend
+    multiple_select_options_config["form_backend_url"] = (
+        live_function_web_app_url + submit_route
+    )
+
+    # update config file for testing multi select options
+    write_config_file(multiple_select_options_config, function_websrc_tmp_dir)
+
+    # open site
+    sb.open(live_function_web_app_url)
+
+    # get question name
+    question_name = multiple_select_options_config["questions"][0]["name"]
+
+    # get list of options
+    options = multiple_select_options_config["questions"][0]["options"]
+
+    # setup submitted input
+    submitted_input = {question_name: ""}
+
+    # get selectable values
+    values = [attrs["value"] for attrs in options if attrs["value"]]
+
+    # now click all options
+    for v in values:
+        # select option by value
+        sb.select_option_by_value(f"select[name={question_name!r}]", v)
+
+    # now updated submitted input
+    submitted_input[question_name] = ", ".join(values)
+
+    # screenshot selected options
+    sb.save_screenshot_to_logs()
+
+    # get form
+    form_element = sb.get_element("form")
+
+    # get send button ...
+    send_button = form_element.find_element(By.ID, "send_button")
+
+    # ... now click it
+    send_button.click()
+
+    # check that the form was submitted
+    sb.assert_text("Contact Form Response")
+
+    # get the HTML content of the response
+    response_html = sb.get_page_source()
+
+    # get received input from Flask response html
+    received_input = {k: v for k, v in extract_received_form_input(response_html)}
+
+    # check keys are same
+    missing_keys = set(submitted_input) - set(received_input)
+    assert not missing_keys, f"Keys are not the same: {missing_keys}"
+
+    # now check values
+    for key in submitted_input.keys():
+        # get values
+        value1 = submitted_input[key]
+        value2 = received_input[key]
+
+        # check
+        assert (
+            value1 == value2
+        ), f"Submitted input: {value1} differs from received: {value2}"
+
+    # save screenshot for confirmation of submission
     sb.save_screenshot_to_logs()

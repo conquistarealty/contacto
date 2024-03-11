@@ -11,6 +11,7 @@ from flask import Flask
 from seleniumbase import BaseCase
 
 from tests.conftest import load_config_file
+from tests.schema import check_config_schema
 
 
 def check_files_subset(source_dir: Path, webfiles: Tuple[str, ...]) -> bool:
@@ -171,3 +172,13 @@ def test_session_config_form_backend_updated(
 
     # check configs match
     assert config[key] == json_data[key]
+
+
+@pytest.mark.fixture
+def test_multi_options_config_schema(
+    multiple_select_options_config: Dict[str, Any]
+) -> None:
+    """Check that the given config.json schema for multi select options is correct."""
+    assert check_config_schema(
+        multiple_select_options_config
+    ), "Error in multi options config fixture."
