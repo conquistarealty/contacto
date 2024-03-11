@@ -491,7 +491,6 @@ def test_form_download_required_constraint(
     sb.save_screenshot_to_logs()
 
 
-@pytest.mark.debug
 @pytest.mark.feature
 def test_select_multiple_options(
     sb: BaseCase,
@@ -571,3 +570,55 @@ def test_select_multiple_options(
 
     # save screenshot for confirmation of submission
     sb.save_screenshot_to_logs()
+
+
+@pytest.mark.feature
+def test_select_default_submission_rejected(
+    sb: BaseCase,
+    live_function_web_app_url: str,
+    submit_route: str,
+    function_websrc_tmp_dir: Path,
+    function_web_app: Flask,
+    multiple_select_options_config: Dict[str, Any],
+) -> None:
+    """Confirm that default select options will not pass for submission."""
+    # add form backend
+    multiple_select_options_config["form_backend_url"] = (
+        live_function_web_app_url + submit_route
+    )
+
+    # update config file for testing multi select options
+    write_config_file(multiple_select_options_config, function_websrc_tmp_dir)
+
+    # open site
+    sb.open(live_function_web_app_url)
+
+    # get form
+    form_element = sb.get_element("form")
+
+    # get send button ...
+    send_button = form_element.find_element(By.ID, "send_button")
+
+    # store page source before
+    page_source = {"before": sb.get_page_source()}
+
+    # get screenshot
+    sb.save_screenshot_to_logs()
+
+    # ... now click it
+    send_button.click()
+
+    # switch to the alert and get its text
+    alert_text = sb.switch_to_alert().text
+
+    # now accept it
+    sb.accept_alert()
+
+    # make sure alert texts match
+    assert alert_text == "Please select a value."
+
+    # now store it after
+    page_source["after"] = sb.get_page_source()
+
+    # should NOT see contact form response
+    assert page_source["before"] == page_source["after"]

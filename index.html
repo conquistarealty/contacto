@@ -41,6 +41,28 @@
     // Show the instructions/form when JavaScript is enabled
     document.querySelector(".container").style.display = "block";
   });
+
+  // Custom validation for select elements
+  document.getElementById("contact-form").addEventListener("submit", function(event) {
+    if (!this.checkValidity()) {
+      // Built-in validation failed, no need to continue
+      return;
+    }
+
+    // Custom validation for select elements
+    var selectElements = this.querySelectorAll("select[required]");
+    for (var i = 0; i < selectElements.length; i++) {
+      if (selectElements[i].value === "") {
+        event.preventDefault(); // Prevent form submission
+        alert("Please select a value.");
+
+        // Scroll to the element
+        selectElements[i].scrollIntoView({ behavior: "smooth", block: "center" });
+
+        return;
+      }
+    }
+  });
 </script>
 </body>
 </html>

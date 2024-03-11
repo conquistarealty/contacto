@@ -182,3 +182,38 @@ def test_multi_options_config_schema(
     assert check_config_schema(
         multiple_select_options_config
     ), "Error in multi options config fixture."
+
+
+@pytest.mark.fixture
+def test_multi_opts_config_multiple(
+    multiple_select_options_config: Dict[str, Any]
+) -> None:
+    """Confirm that the multi selection options config has multiple options."""
+    # get questions
+    question = multiple_select_options_config["questions"][0]
+
+    # check multiple options
+    assert len(question["options"]) > 1
+
+    # check custom.multiple attr set
+    assert question["custom"]["multiple"]
+
+
+@pytest.mark.fixture
+def test_multi_opts_config_defaults(
+    multiple_select_options_config: Dict[str, Any]
+) -> None:
+    """Check that at least one options is selected and disabled."""
+    # get options
+    options = multiple_select_options_config["questions"][0]["options"]
+
+    # results store
+    results = []
+
+    # loop over options
+    for opt in options:
+        # check for default
+        results.append(opt.get("selected", False) and opt.get("disabled", False))
+
+    # now check results
+    assert any(results)
