@@ -22,7 +22,7 @@
         {"label": "White", "value": "white"}
       ],
       "custom": {
-        "multiple": false
+        "multiple": true
       }
     },
     {
