@@ -615,7 +615,7 @@ def test_select_default_submission_rejected(
     sb.accept_alert()
 
     # make sure alert texts match
-    assert alert_text == "Please select a value."
+    assert alert_text == "Please select an option."
 
     # now store it after
     page_source["after"] = sb.get_page_source()

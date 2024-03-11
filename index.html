@@ -54,7 +54,7 @@
     for (var i = 0; i < selectElements.length; i++) {
       if (selectElements[i].value === "") {
         event.preventDefault(); // Prevent form submission
-        alert("Please select a value.");
+        alert("Please select an option.");
 
         // Scroll to the element
         selectElements[i].scrollIntoView({ behavior: "smooth", block: "center" });
