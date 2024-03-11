@@ -36,12 +36,6 @@
   </noscript>
 <script src="scripts/form.js"></script>
 <script>
-  // Everything hidden by default (only displayed if javascript enabled)
-  document.addEventListener("DOMContentLoaded", function() {
-    // Show the instructions/form when JavaScript is enabled
-    document.querySelector(".container").style.display = "block";
-  });
-
   // Custom validation for select elements
   document.getElementById("contact-form").addEventListener("submit", function(event) {
     if (!this.checkValidity()) {

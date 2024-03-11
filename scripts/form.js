@@ -102,9 +102,15 @@ function copyEmailToClipboard(email) {
      console.log('Number of selected options:', selectedCount);
  }
 
-// Set form action (mailto) from config.json
+// Fetching and populating form fields from config.json
 fetch('config.json')
-.then(response => response.json())
+.then(response => {
+    // Alert user if config.json unreachable
+    if (!response.ok) {
+        throw new Error('Network response was not ok');
+    }
+    return response.json();
+})
 .then(data => {
     // Alert user if email key not found
     if (!data.email) {
@@ -146,23 +152,6 @@ fetch('config.json')
             copyEmailToClipboard(email);
         });
     });
-})
-.catch(error => {
-    handleConfigError(error);
-});
-
-// Fetching and populating form fields from config.json
-fetch('config.json')
-.then(response => {
-    // Alert user if config.json unreachable
-    if (!response.ok) {
-        throw new Error('Network response was not ok');
-    }
-    return response.json();
-})
-.then(data => {
-    // Get form element by id
-    const form = document.getElementById('contact-form');
 
     // Iterate over questions in config.json
     data.questions.forEach(question => {
@@ -289,6 +278,9 @@ fetch('config.json')
         }
     });
     form.appendChild(download_html_button);
+
+    // Show the instructions/form when JavaScript is enabled
+    document.querySelector(".container").style.display = "block";
 })
 .catch(error => {
     handleConfigError(error);
