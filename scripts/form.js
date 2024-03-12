@@ -1,3 +1,72 @@
+// Function to convert files to data urls
+function handleFileUpload(event, formData, callback) {
+    // Extract file input and files from the event
+    const fileInput = event.target;
+    const files = fileInput.files;
+
+    // Array to store promises for each file upload operation
+    const promises = [];
+
+    // Debug statement: Output files to console
+    console.log("Files:", files);
+
+    // Iterate over each file in the files array
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        // Debug statement: Output current file being processed to console
+        console.log("Processing file:", file.name);
+
+        // Create a promise for each file upload operation
+        const promise = new Promise((resolve) => {
+            // Create a FileReader object to read the file content
+            const reader = new FileReader();
+
+            // Define onload event handler for the FileReader
+            reader.onload = function(event) {
+                // Retrieve the file content from the FileReader result
+                const fileContent = event.target.result;
+
+                // Debug statement: Output file content to console
+                console.log("File content:", fileContent);
+
+                // Create a data URL from the file content
+                const dataUrl = `data:${file.type};base64,${btoa(fileContent)}`;
+
+                // Update the formData object with the data URL
+                if (Array.isArray(formData[fileInput.name])) {
+                    // If formData property is an array, push the data URL to it
+                    formData[fileInput.name].push(dataUrl);
+                } else {
+                    // Otherwise, create a new array with the data URL
+                    formData[fileInput.name] = [dataUrl];
+                }
+
+                // Debug statement: Output updated formData to console
+                console.log("Updated formData:", formData);
+
+                // Resolve the promise when file reading is complete
+                resolve();
+            };
+
+            // Read the file as binary string
+            reader.readAsBinaryString(file);
+        });
+
+        // Push the promise to the promises array
+        promises.push(promise);
+    }
+
+    // Wait for all promises to resolve
+    Promise.all(promises).then(() => {
+        // Debug statement: Indicate that all file uploads are completed
+        console.log("All file uploads completed");
+
+        // Invoke the callback with the updated formData object
+        callback(formData);
+    });
+}
+
 // Function to generate HTML content
 function generateHtmlContent(formData) {
     let htmlContent = `<!DOCTYPE html>
@@ -23,6 +92,15 @@ function generateHtmlContent(formData) {
     label {
         font-weight: bold;
     }
+    img {
+        max-width: 100%; /* Adjust this value as needed */
+    }
+    video {
+        max-width: 100%; /* Adjust this value as needed */
+    }
+    audio {
+        max-width: 100%; /* Adjust this value as needed */
+    }
     </style>
     </head>
     <body>
@@ -32,10 +110,45 @@ function generateHtmlContent(formData) {
     // Add form data to the HTML content
     for (const key in formData) {
         htmlContent += `<label for="${key}">${key}:</label>`;
-        // If the value is an array (multiple selections), format it as comma-separated
+
+        // If the value is an array (multiple files)
         if (Array.isArray(formData[key])) {
-            htmlContent += `${formData[key].join(', ')}`;
+            // First add some extra space between label and value(s)
+            htmlContent += `<p>`;
+
+            // Handle multiple file data URLs and the correct tag for the MIME type
+            formData[key].forEach(url => {
+                // log file
+                console.log("Adding to Download HTML: " + url)
+                // Get MIME type of the file
+                const mimeType = url.split(';')[0].split(':')[1];
+
+                if (mimeType.startsWith('image')) {
+                    htmlContent += `<img src="${url}" alt="${key}" /><br>`;
+                } else if (mimeType.startsWith('video')) {
+                    htmlContent += `
+                        <video controls>
+                            <source src="${url}" type="${mimeType}">
+                            Your browser does not support the video tag.
+                        </video><br>
+                    `;
+                } else if (mimeType.startsWith('audio')) {
+                    htmlContent += `
+                        <audio controls>
+                            <source src="${url}" type="${mimeType}">
+                            Your browser does not support the audio tag.
+                        </audio><br>
+                    `;
+                } else {
+                    htmlContent += `<p><a href="${url}">${key}</a></p>`;
+                }
+            });
+
+            // Close <p> tag
+            htmlContent += `</p>`;
+
         } else {
+            // Just normal data
             htmlContent += `<p>${formData[key]}</p>`;
         }
     }
@@ -256,23 +369,46 @@ fetch('config.json')
         });
 
         if (valid) {
-            // Generate HTML content
-            const htmlContent = generateHtmlContent(formData);
+            // Initialize an array to store all promises
+            const promises = [];
 
-            // Create a Blob containing the HTML content
-            const blob = new Blob([htmlContent], { type: 'text/html' });
+            // Handle file uploads sequentially
+            const fileInputs = form.querySelectorAll('input[type="file"]');
+            fileInputs.forEach(fileInput => {
+              // Create a promise for each file upload operation
+              const promise = new Promise((resolve) => {
+                  handleFileUpload({ target: fileInput }, formData, updatedFormData => {
+                      console.log("Callback formData updated:", updatedFormData);
+                      resolve();
+                  });
+              });
+              promises.push(promise);
+            });
 
-            // Create a download link
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'contact_form_response.html';
+            // Wait for all promises to resolve
+            Promise.all(promises).then(() => {
+              // All file uploads are completed
+              console.log("After handleFileUpload: " + JSON.stringify(formData));
 
-            // Append the link to the body and click it programmatically
-            document.body.appendChild(link);
-            link.click();
+              // Generate HTML content
+              const htmlContent = generateHtmlContent(formData);
 
-            // Remove the link from the body
-            document.body.removeChild(link);
+              // Create a Blob containing the HTML content
+              const blob = new Blob([htmlContent], { type: 'text/html' });
+
+              // Create a download link
+              const link = document.createElement('a');
+              link.href = URL.createObjectURL(blob);
+              link.download = 'contact_form_response.html';
+
+              // Append the link to the body and click it programmatically
+              document.body.appendChild(link);
+              link.click();
+
+              // Remove the link from the body
+              document.body.removeChild(link);
+            });
+
         } else {
             alert('Please fill out all required fields.');
         }
