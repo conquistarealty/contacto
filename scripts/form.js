@@ -92,14 +92,9 @@ function generateHtmlContent(formData) {
     label {
         font-weight: bold;
     }
-    img {
-        max-width: 100%; /* Adjust this value as needed */
-    }
-    video {
-        max-width: 100%; /* Adjust this value as needed */
-    }
-    audio {
-        max-width: 100%; /* Adjust this value as needed */
+    img, video, audio {
+      min-width: 100%;
+      max-width: 100%;
     }
     </style>
     </head>
