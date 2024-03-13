@@ -1,5 +1,6 @@
 """Configuration file for pytest."""
 
+import base64
 import json
 import os
 import random
@@ -17,6 +18,8 @@ from flask import render_template
 from flask import request
 from flask import send_from_directory
 from selenium.webdriver.common.keys import Keys
+from werkzeug.datastructures import FileStorage
+from werkzeug.datastructures import ImmutableMultiDict
 
 
 def pytest_configure(config):
@@ -50,6 +53,81 @@ def create_temp_websrc_dir(src: Path, dst: Path, src_files: Tuple[str, ...]) -> 
             shutil.copy(source_item_path, sub_dir)
 
     return sub_dir
+
+
+def get_html_tag_from_mimetype(file: FileStorage, encoded_data: str) -> str:
+    """Generate an HTML tag based on the MIME type of the file."""
+    # create data URL for reuse below
+    data_url = f"data:{file.mimetype};base64,{encoded_data}"
+
+    # match the mimetype
+    match file.mimetype.split("/")[0]:
+        case "image":
+            tag = f"<img src={data_url!r}>"
+        case "video":
+            tag = (
+                f"<video controls>"
+                f"    <source src={data_url!r} type={file.mimetype!r}>"
+                f"    Your browser does not support the video tag."
+                f"</video>"
+            )
+        case "audio":
+            tag = (
+                f"<audio controls>"
+                f"    <source src={data_url!r} type={file.mimetype!r}>"
+                f"    Your browser does not support the audio tag."
+                f"</audio>"
+            )
+        case _:
+            tag = f"<a href={data_url!r}>Download {file.filename}</a>"
+
+    return tag
+
+
+def process_form_data(form_data: ImmutableMultiDict) -> Dict[str, Any]:
+    """Process form data to handle multi-values."""
+    # setup processed results
+    processed_data: Dict[str, Any] = {}
+
+    # check form key/values
+    for key, value in form_data.items(multi=True):
+        # check if key indicates file(s)
+        if key in request.files:
+            processed_data[key] = ""
+
+        # check to see if there are multiple values
+        elif key in processed_data:
+            processed_data[key] += f", {value}"
+
+        # handle normally
+        else:
+            processed_data[key] = value
+
+    return processed_data
+
+
+def process_uploaded_files(processed_data: Dict[str, Any]) -> None:
+    """Process uploaded files and generate HTML tags."""
+    # get list of tuples for key/files pairs
+    for key, files in request.files.lists():
+        # loop over each file
+        for file in files:
+            # make sure it exists
+            if file.filename:
+                # get data from file
+                file_data = file.read()
+
+                # convert to base64 for data URL creation later ...
+                encoded_data = base64.b64encode(file_data).decode("utf-8")
+
+                # create tag
+                tag = get_html_tag_from_mimetype(file, encoded_data)
+
+                # update current results
+                if key in processed_data:
+                    processed_data[key] += "<br>" + tag
+                else:
+                    processed_data[key] = tag
 
 
 def build_flask_app(serve_directory: Path, port: int, submit_route: str) -> Flask:
@@ -92,29 +170,19 @@ def build_flask_app(serve_directory: Path, port: int, submit_route: str) -> Flas
     @app.route(submit_route, methods=["POST"])
     def submit_form():
         """Render HTML form data as a response form."""
-        # access form data submitted by the client
-        form_data = request.form
-
-        # create processed dict
-        processed_data = {}
-
         # log data
-        print(f"Form data received: {form_data}")
+        print(f"Form data received: {request.form}")
 
-        # Process form data to handle multi-values
-        processed_data = {}
-        for key, value in form_data.items(multi=True):
-            if key in processed_data:
-                # If key already exists, append the value
-                processed_data[key] += f", {value}"
-            else:
-                # If key does not exist, set the value
-                processed_data[key] = value
+        # process data
+        processed_data = process_form_data(request.form)
 
         # log processed data
         print(f"Processed data: {processed_data}")
 
-        # render the template with the form data
+        # process any files
+        process_uploaded_files(processed_data)
+
+        # now render response
         return render_template("form_response_template.html", form_data=processed_data)
 
     # return configured and route decorated Flask app
@@ -153,6 +221,55 @@ def update_form_backend_config(
 
     # write out updated file
     write_config_file(config, src_path)
+
+
+@pytest.fixture(scope="function")
+def dummy_txt_file_path(tmp_path) -> Path:
+    """Create a dummy temporary text file."""
+    # create a temporary directory
+    tmpdir = tmp_path / "uploads"
+    tmpdir.mkdir()
+
+    # define the file path
+    file_path = tmpdir / "test_file.txt"
+
+    # write content to the file
+    with open(file_path, "w") as f:
+        f.write("This is a test file.")
+
+    return file_path
+
+
+@pytest.fixture(scope="function")
+def dummy_txt_file_stream(dummy_txt_file_path) -> FileStorage:
+    """Create a Flask FileStorage object from text file."""
+    # create a FileStorage object
+    return FileStorage(stream=open(dummy_txt_file_path, "rb"), filename="test_file.txt")
+
+
+@pytest.fixture(scope="function")
+def dummy_txt_file_data_url(dummy_txt_file_path) -> str:
+    """Create a data URL for the dummy text file."""
+    # read the content of the file
+    with open(dummy_txt_file_path, "rb") as f:
+        file_content = f.read()
+
+    # encode the file content as base64
+    base64_content = base64.b64encode(file_content).decode("utf-8")
+
+    # construct the data URL with the appropriate MIME type
+    return f"data:text/plain;base64,{base64_content}"
+
+
+@pytest.fixture(scope="function")
+def dummy_form_post_data(dummy_txt_file_stream) -> Dict[str, Any]:
+    """Collection of name/value pairs to simulate form post data."""
+    return {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "message": "This is a test message.",
+        "text_file": dummy_txt_file_stream,
+    }
 
 
 @pytest.fixture(scope="session")

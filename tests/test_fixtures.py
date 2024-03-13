@@ -7,6 +7,7 @@ from typing import Dict
 from typing import Tuple
 
 import pytest
+from bs4 import BeautifulSoup
 from flask import Flask
 from seleniumbase import BaseCase
 
@@ -113,20 +114,23 @@ def test_serve_scripts_route(session_web_app: Flask) -> None:
     assert response.status_code == 200
 
 
+@pytest.mark.debug
 @pytest.mark.flask
 @pytest.mark.fixture
-def test_submit_form_route(session_web_app: Flask, submit_route: str) -> None:
+def test_submit_form_route(
+    session_web_app: Flask,
+    submit_route: str,
+    dummy_form_post_data: Dict[str, Any],
+    dummy_txt_file_data_url: str,
+) -> None:
     """Test the route for submitting a form."""
     # get client
     client = session_web_app.test_client()
 
-    # simulate a form submission
-    form_data = {
-        "name": "John Doe",
-        "email": "john@example.com",
-        "message": "This is a test message.",
-    }
-    response = client.post(submit_route, data=form_data)
+    # submit response
+    response = client.post(
+        submit_route, data=dummy_form_post_data, content_type="multipart/form-data"
+    )
 
     # assert that the response status code is 200 (OK)
     assert response.status_code == 200
@@ -134,9 +138,47 @@ def test_submit_form_route(session_web_app: Flask, submit_route: str) -> None:
     # get content
     content = response.data.decode("utf-8")
 
-    # Optionally, you can check the response content
+    # check response html header
     assert "Contact Form Response" in content
-    assert all(form_data[key] in content for key in form_data)
+
+    # parse the HTML response
+    soup = BeautifulSoup(response.data, "html.parser")
+
+    # find the container div
+    container = soup.find("div", class_="container")
+    assert container is not None, "Container div not found in HTML response"
+
+    # find and extract form data from the HTML
+    form_data = {}
+    labels = container.find_all("label")
+    for label in labels:
+        key = label["for"]
+        # find the <p> tag associated with the label
+        p_tag = label.find_next_sibling("p")
+        if p_tag:
+            # find the <a> tag within the <p> tag
+            a_tag = p_tag.find("a")
+            if a_tag:
+                # extract the value of the "href" attribute from the <a> tag
+                value = a_tag.get("href")
+            else:
+                # if <a> tag is not found, set value to None
+                value = " ".join(p_tag.stripped_strings)
+            form_data[key] = value
+
+    # define expected form data
+    expected_form_data = {
+        "name": dummy_form_post_data["name"],
+        "email": dummy_form_post_data["email"],
+        "message": dummy_form_post_data["message"],
+        "text_file": dummy_txt_file_data_url,
+    }
+
+    # assert that the form data matches the expected form data
+    for key in expected_form_data:
+        assert (
+            form_data[key] == expected_form_data[key]
+        ), "Form data in HTML response does not match expected form data"
 
 
 @pytest.mark.flask
