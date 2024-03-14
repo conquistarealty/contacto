@@ -69,20 +69,24 @@ function handleFileUpload(event, formData, callback) {
 
 // Function to generate HTML content
 function generateHtmlContent(formData) {
+    // Base space
+    let indent = "      ";
+
+    // Template
     let htmlContent = `<!DOCTYPE html>
-    <html lang="en">
-    <head>
+<html lang="en">
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Form Response</title>
     <style>
-    body {
+      body {
         font-family: Arial, sans-serif;
         background-color: #222;
         color: #eee;
         padding: 20px;
-    }
-    .container {
+      }
+      .container {
         max-width: 600px;
         margin: 0 auto;
         background-color: #333;
@@ -90,28 +94,28 @@ function generateHtmlContent(formData) {
         padding: 20px;
         border-radius: 10px;
         box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-    }
-    label {
+      }
+      label {
         font-weight: bold;
-    }
-    img, video, audio {
-      min-width: 100%;
-      max-width: 100%;
-    }
+      }
+      img, video, audio {
+        min-width: 100%;
+        max-width: 100%;
+      }
     </style>
-    </head>
-    <body>
+  </head>
+  <body>
     <div class="container">
-    <h2>Contact Form Response</h2>\n`;
+      <h2>Contact Form Response</h2>\n`;
 
     // Add form data to the HTML content
     for (const key in formData) {
-        htmlContent += `<label for="${key}">${key}:</label>\n`;
+        htmlContent += indent + `<label for="${key}">${key}:</label>\n`;
 
         // If the value is an array (multiple files)
         if (Array.isArray(formData[key])) {
             // First add some extra space between label and value(s)
-            htmlContent += `<p>\n`;
+            htmlContent += indent + `  <p>\n`;
 
             // Handle multiple file data URLs and the correct tag for the MIME type
             formData[key].forEach(url => {
@@ -121,42 +125,48 @@ function generateHtmlContent(formData) {
                 const mimeType = url.split(';')[0].split(':')[1];
 
                 if (mimeType.startsWith('image')) {
-                    htmlContent += `<img src="${url}" alt="${key}" /><br>\n`;
+                    htmlContent += indent + [
+                        `    <img src="${url}" alt="${key}" />`,
+                        '    <br>\n'
+                    ].join('\n' + indent);
                 } else if (mimeType.startsWith('video')) {
-                    htmlContent += `
-                        <video controls>
-                            <source src="${url}" type="${mimeType}">
-                            Your browser does not support the video tag.
-                        </video><br>
-                    `;
+                    htmlContent += indent + [
+                        '    <video controls>',
+                        `      <source src="${url}" type="${mimeType}">`,
+                        '      Your browser does not support the video tag.',
+                        '    </video>',
+                        '    <br>\n'
+                    ].join('\n' + indent);
                 } else if (mimeType.startsWith('audio')) {
-                    htmlContent += `
-                        <audio controls>
-                            <source src="${url}" type="${mimeType}">
-                            Your browser does not support the audio tag.
-                        </audio><br>
-                    `;
+                    htmlContent += indent + [
+                        '      <audio controls>',
+                        `        <source src="${url}" type="${mimeType}">`,
+                        '        Your browser does not support the audio tag.',
+                        '      </audio>',
+                        '      <br>\n'
+                    ].join('\n' + indent);
                 } else {
-                    htmlContent += `<a href="${url}">${key}</a>\n`;
+                    htmlContent += indent + `    <a href="${url}">${key}</a>\n`;
                 }
             });
 
             // Close <p> tag
-            htmlContent += `</p>\n`;
+            htmlContent += indent + `  </p>\n`;
 
         } else {
             // Just normal data
-            htmlContent += `<p>${formData[key]}</p>\n`;
+            htmlContent += indent + `  <p>${formData[key]}</p>\n`;
         }
     }
 
     // Add closing HTML tags
-    htmlContent += `</div>
-    </body>
-    </html>`;
+    htmlContent += `    </div>
+  </body>
+</html>`;
 
     return htmlContent;
 }
+
 
 // Function to handle errors
 function handleConfigError(error) {
