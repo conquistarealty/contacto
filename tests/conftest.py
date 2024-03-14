@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import Generator
+from typing import Set
 from typing import Tuple
 
 import pytest
@@ -17,6 +18,7 @@ from flask import Flask
 from flask import render_template
 from flask import request
 from flask import send_from_directory
+from PIL import Image
 from selenium.webdriver.common.keys import Keys
 from werkzeug.datastructures import FileStorage
 from werkzeug.datastructures import ImmutableMultiDict
@@ -30,6 +32,25 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "flask: custom marker for flask server tests.")
     config.addinivalue_line("markers", "schema: custom marker for schema tests.")
     config.addinivalue_line("markers", "website: custom marker for website tests.")
+
+
+def generate_unique_random_ports(num_ports: int) -> Generator[int, None, None]:
+    """Generator that only yield unique random ports."""
+    # create set of used ports
+    used_ports: Set[int] = set()
+
+    # loop over ports
+    while len(used_ports) < num_ports:
+        # get random port
+        port = random.randint(5001, 65535)
+
+        # check it is unique
+        if port not in used_ports:
+            # send it forward
+            yield port
+
+            # mark it as used
+            used_ports.add(port)
 
 
 def create_temp_websrc_dir(src: Path, dst: Path, src_files: Tuple[str, ...]) -> Path:
@@ -182,6 +203,9 @@ def build_flask_app(serve_directory: Path, port: int, submit_route: str) -> Flas
         # process any files
         process_uploaded_files(processed_data)
 
+        # log files added
+        print(f"Added uploaded files: {processed_data}")
+
         # now render response
         return render_template("form_response_template.html", form_data=processed_data)
 
@@ -212,15 +236,33 @@ def write_config_file(config: Dict[str, Any], src_path: Path) -> None:
         json.dump(config, json_file, indent=2)
 
 
-def update_form_backend_config(
-    config: Dict[str, Any], src_path: Path, port: int
-) -> None:
-    """Set the form backend url to testing server url."""
+def prepare_default_config(config: Dict[str, Any], src_path: Path, port: int) -> None:
+    """Update the default config copy with values approprate for testing."""
     # update form backend
     config["form_backend_url"] = f"http://localhost:{port}/submit"
 
+    # update input[type=file] accept attr
+    for question in config["questions"]:
+        # check type
+        if question["type"] == "file":
+            # check for custom attr
+            if "custom" in question:
+                # only update accept attr
+                question["custom"]["accept"] = "*"
+
+            else:
+                # add custom section with accept attr
+                question["custom"] = {"accept": "*"}
+
     # write out updated file
     write_config_file(config, src_path)
+
+
+@pytest.fixture(scope="session")
+def session_tmp_dir(tmp_path_factory) -> Path:
+    """Uses temporary path factory to create a session-scoped temp path."""
+    # create a temporary directory using tmp_path_factory
+    return tmp_path_factory.mktemp("session_temp_dir")
 
 
 @pytest.fixture(scope="function")
@@ -273,10 +315,38 @@ def dummy_form_post_data(dummy_txt_file_stream) -> Dict[str, Any]:
 
 
 @pytest.fixture(scope="session")
-def form_inputs() -> Dict[str, Any]:
+def dummy_jpg_file_path(session_tmp_dir: Path) -> Path:
+    """Create a dummy JPEG image."""
+    # create image dir
+    img_dir = session_tmp_dir / "images"
+    img_dir.mkdir()
+
+    # create a dummy image
+    img_path = img_dir / "dummy_image.jpg"
+    image = Image.new("RGB", (100, 100), color="red")  # create a red image
+    image.save(img_path)
+
+    return img_path
+
+
+@pytest.fixture(scope="session")
+def dummy_jpg_data_url(dummy_jpg_file_path) -> str:
+    """Create a data URL for the dummy JPEG file."""
+    # read the content of the file
+    with open(dummy_jpg_file_path, "rb") as f:
+        file_content = f.read()
+
+    # encode the file content as base64
+    base64_content = base64.b64encode(file_content).decode("utf-8")
+
+    # construct the data URL with the appropriate MIME type
+    return f"data:image/jpeg;base64,{base64_content}"
+
+
+@pytest.fixture(scope="session")
+def form_inputs(dummy_jpg_file_path: Path, dummy_jpg_data_url: str) -> Dict[str, Any]:
     """Defines the values to be submitted for each input type during form tests."""
     return {
-        "email": "foo@bar.com",
         "date": {"date": "01012000"},
         "datetime-local": {
             "date": "01012000",
@@ -284,6 +354,8 @@ def form_inputs() -> Dict[str, Any]:
             "time": "1200",
             "period": "AM",
         },
+        "email": "foo@bar.com",
+        "file": (str(dummy_jpg_file_path), dummy_jpg_data_url),
         "number": "42",
         "selectbox": None,
         "tel": "18005554444",
@@ -315,13 +387,6 @@ def website_files() -> Tuple[str, ...]:
     """Declare the files necessary for serving the website."""
     # define the files and directories to copy from the project directory
     return ("index.html", "config.json", "styles", "scripts")
-
-
-@pytest.fixture(scope="session")
-def session_tmp_dir(tmp_path_factory) -> Path:
-    """Uses temporary path factory to create a session-scoped temp path."""
-    # create a temporary directory using tmp_path_factory
-    return tmp_path_factory.mktemp("session_temp_dir")
 
 
 @pytest.fixture(scope="session")
@@ -375,7 +440,7 @@ def session_web_app(
     port = 5000
 
     # now update config.json with new backend url
-    update_form_backend_config(default_site_config, session_websrc_tmp_dir, port)
+    prepare_default_config(default_site_config, session_websrc_tmp_dir, port)
 
     # create app
     return build_flask_app(session_websrc_tmp_dir, port, submit_route)
@@ -396,18 +461,20 @@ def live_session_web_app_url(session_web_app: Flask) -> str:
 
 
 @pytest.fixture(scope="function")
-def random_port() -> int:
-    """Generate a random port greater than 5000."""
-    return random.randint(5001, 65535)
+def unique_random_port() -> int:
+    """Generate a unique random port greater than 5000."""
+    # control the number of ports generated
+    num_ports = 100
+    return next(generate_unique_random_ports(num_ports))
 
 
 @pytest.fixture(scope="function")
 def function_web_app(
-    function_websrc_tmp_dir: Path, submit_route: str, random_port: int
+    function_websrc_tmp_dir: Path, submit_route: str, unique_random_port: int
 ) -> Flask:
     """Create a function-scoped Flask app for testing with the website source."""
     # create app
-    return build_flask_app(function_websrc_tmp_dir, random_port, submit_route)
+    return build_flask_app(function_websrc_tmp_dir, unique_random_port, submit_route)
 
 
 @pytest.fixture(scope="function")

@@ -149,6 +149,17 @@ def fill_out_form(
                 # now update test value
                 test_value = convert_to_isoformat(**test_value)
 
+            # check if file tuple
+            if isinstance(test_value, tuple):
+                # unpack
+                file_path, data_url = test_value
+
+                # send file path
+                input_element.send_keys(file_path)
+
+                # update test value
+                test_value = data_url
+
             else:
                 # just normal
                 input_element.send_keys(test_value)
@@ -192,14 +203,35 @@ def extract_received_form_input(
         # get label's "for" attribute as key
         key = label["for"]
 
-        # now get immediate value element
+        # now find the value element
         value_element = label.find_next_sibling("p")
 
-        # clean it
-        received_value = value_element.text.strip()
+        # check if sub elements exist within the <p> tag
+        sub_elements = value_element.find_all(["a", "img", "video", "audio"])
 
-        # yield the key/value pair
-        yield key, received_value
+        # found sub elements ...
+        if sub_elements:
+            # set storage
+            data_url = ""
+
+            # loop over them
+            for element in sub_elements:
+                # check for "other" type
+                if element.name == "a":
+                    # get "href" attribute as value
+                    data_url = element.get("href", "")
+
+                elif element.name in ["img", "video", "audio"]:
+                    # get "src" attribute as value
+                    data_url = element.get("src", "")
+
+            # finally convert to tuple
+            yield key, data_url
+
+        else:
+            # if no sub elements exist, clean and yield the text value
+            received_value = value_element.text.strip()
+            yield key, received_value
 
 
 @pytest.mark.website
@@ -444,6 +476,12 @@ def test_form_download(
             value1 == value2
         ), f"Submitted input: {value1} differs from received: {value2}"
 
+    # open downloaded file in seleniumbase
+    sb.open("file://" + download_path)
+
+    # check download html file opened in browser
+    sb.assert_text("Contact Form Response")
+
     # save screenshot for confirmation
     sb.save_screenshot_to_logs()
 
@@ -603,9 +641,6 @@ def test_select_default_submission_rejected(
     # store page source before
     page_source = {"before": sb.get_page_source()}
 
-    # get screenshot
-    sb.save_screenshot_to_logs()
-
     # ... now click it
     send_button.click()
 
@@ -623,3 +658,6 @@ def test_select_default_submission_rejected(
 
     # should NOT see contact form response
     assert "Contact Form Response" not in page_source["after"]
+
+    # get screenshot
+    sb.save_screenshot_to_logs()

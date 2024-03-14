@@ -5,6 +5,15 @@
   "email": "your_email@example.com",
   "questions": [
     {
+      "label": "Upload funny memes",
+      "name": "meme_imgs",
+      "type": "file",
+      "required": true,
+      "custom": {
+        "multiple": true
+      }
+    },
+    {
       "label": "Select your favorite color",
       "name": "favorite_color",
       "type": "selectbox",

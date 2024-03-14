@@ -78,16 +78,18 @@ function generateHtmlContent(formData) {
     <style>
     body {
         font-family: Arial, sans-serif;
-        background-color: #f0f0f0;
+        background-color: #222;
+        color: #eee;
         padding: 20px;
     }
     .container {
         max-width: 600px;
         margin: 0 auto;
-        background-color: #fff;
+        background-color: #333;
+        color: #eee;
         padding: 20px;
         border-radius: 10px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
     }
     label {
         font-weight: bold;
@@ -100,16 +102,16 @@ function generateHtmlContent(formData) {
     </head>
     <body>
     <div class="container">
-    <h2>Contact Form Response</h2>`;
+    <h2>Contact Form Response</h2>\n`;
 
     // Add form data to the HTML content
     for (const key in formData) {
-        htmlContent += `<label for="${key}">${key}:</label>`;
+        htmlContent += `<label for="${key}">${key}:</label>\n`;
 
         // If the value is an array (multiple files)
         if (Array.isArray(formData[key])) {
             // First add some extra space between label and value(s)
-            htmlContent += `<p>`;
+            htmlContent += `<p>\n`;
 
             // Handle multiple file data URLs and the correct tag for the MIME type
             formData[key].forEach(url => {
@@ -119,7 +121,7 @@ function generateHtmlContent(formData) {
                 const mimeType = url.split(';')[0].split(':')[1];
 
                 if (mimeType.startsWith('image')) {
-                    htmlContent += `<img src="${url}" alt="${key}" /><br>`;
+                    htmlContent += `<img src="${url}" alt="${key}" /><br>\n`;
                 } else if (mimeType.startsWith('video')) {
                     htmlContent += `
                         <video controls>
@@ -135,16 +137,16 @@ function generateHtmlContent(formData) {
                         </audio><br>
                     `;
                 } else {
-                    htmlContent += `<p><a href="${url}">${key}</a></p>`;
+                    htmlContent += `<a href="${url}">${key}</a>\n`;
                 }
             });
 
             // Close <p> tag
-            htmlContent += `</p>`;
+            htmlContent += `</p>\n`;
 
         } else {
             // Just normal data
-            htmlContent += `<p>${formData[key]}</p>`;
+            htmlContent += `<p>${formData[key]}</p>\n`;
         }
     }
 
@@ -246,8 +248,18 @@ fetch('config.json')
     // Set form backend URL if available and not null
     const formBackendUrl = data.form_backend_url;
     if (formBackendUrl !== undefined && formBackendUrl !== null) {
-       form.setAttribute('action', formBackendUrl);
-       form.setAttribute('enctype', 'application/x-www-form-urlencoded');
+      // Set form backend URL and enctype if available and not null
+      form.setAttribute('action', formBackendUrl);
+
+      // Check if any question has type="file" in config.json
+      const hasFileUpload = data.questions.some(question => question.type === 'file');
+      if (hasFileUpload) {
+          // If any question involves file upload use multipart encoding
+          form.setAttribute('enctype', 'multipart/form-data');
+      } else {
+          // Otherwise, set enctype for URL encoding
+          form.setAttribute('enctype', 'application/x-www-form-urlencoded');
+      }
     }
 
     // Update email placeholder in instructions
