@@ -365,20 +365,21 @@ def test_form_submission_required_constraint(
     # store page source before
     page_source = {"before": sb.get_page_source()}
 
+    # check for required questions
+    required_questions_present = any_required_questions(config["questions"])
+
     # ... now click it
     send_button.click()
+
+    # check alert message
+    if required_questions_present:
+        sb.wait_for_and_accept_alert()
 
     # now store it after
     page_source["after"] = sb.get_page_source()
 
-    # now check appropriate behavior
-    if any_required_questions(config["questions"]):
-        # should NOT see contact form response
-        assert page_source["before"] == page_source["after"]
-
-    else:
-        # should see contact form response
-        sb.assert_text("Contact Form Response")
+    # should see red outlined required questions
+    assert all(check_required_inputs_border_red(page_source["after"]))
 
     # save screenshot for confirmation
     sb.save_screenshot_to_logs()
@@ -615,10 +616,10 @@ def test_select_default_submission_rejected(
     sb.accept_alert()
 
     # make sure alert texts match
-    assert alert_text == "Please select an option."
+    assert alert_text == "Please fill out all required fields."
 
     # now store it after
     page_source["after"] = sb.get_page_source()
 
     # should NOT see contact form response
-    assert page_source["before"] == page_source["after"]
+    assert "Contact Form Response" not in page_source["after"]

@@ -114,7 +114,6 @@ def test_serve_scripts_route(session_web_app: Flask) -> None:
     assert response.status_code == 200
 
 
-@pytest.mark.debug
 @pytest.mark.flask
 @pytest.mark.fixture
 def test_submit_form_route(

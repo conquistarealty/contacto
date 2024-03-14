@@ -60,7 +60,7 @@ function handleFileUpload(event, formData, callback) {
     // Wait for all promises to resolve
     Promise.all(promises).then(() => {
         // Debug statement: Indicate that all file uploads are completed
-        console.log("All file uploads completed");
+        console.log("All file uploads completed!");
 
         // Invoke the callback with the updated formData object
         callback(formData);
@@ -114,7 +114,7 @@ function generateHtmlContent(formData) {
             // Handle multiple file data URLs and the correct tag for the MIME type
             formData[key].forEach(url => {
                 // log file
-                console.log("Adding to Download HTML: " + url)
+                console.log("Embedding file into HTML: " + url)
                 // Get MIME type of the file
                 const mimeType = url.split(';')[0].split(':')[1];
 
@@ -330,6 +330,66 @@ fetch('config.json')
     send_button.setAttribute('id', 'send_button'); // Add id attribute
     form.appendChild(send_button);
 
+    // Custom validation
+    send_button.addEventListener('click', function(event) {
+        // Prevent the default form submission behavior
+        event.preventDefault();
+
+        // Check if the form element is selected correctly
+        const contactForm = document.getElementById("contact-form");
+        const inputs = contactForm.querySelectorAll('input, textarea, select');
+        let customValidationFailed = false;
+
+        // Log to console
+        console.log("Beginning custom form validation");
+
+        // Begin input checking ...
+        inputs.forEach(input => {
+            let fieldValue = input.value;
+
+            if (input.tagName === 'SELECT') {
+                if (input.hasAttribute('multiple')) {
+                    // Handle <select multiple> elements
+                    const selectedOptions = Array.from(input.selectedOptions);
+                    const selectedValues = selectedOptions.map(option => option.value);
+
+                    // Check if any selected option has an empty string value
+                    if (selectedValues.includes('')) {
+                        fieldValue = ''; // Set fieldValue to an empty string
+                    }
+                } else {
+                    // Handle single-selection <select> elements
+                    fieldValue = input.value;
+                }
+            }
+
+            if (input.hasAttribute('required') && (!fieldValue || !fieldValue.trim())) {
+                // Highlight required fields in red
+                input.style.borderColor = 'red';
+
+                // Set the flag to indicate custom validation failure
+                customValidationFailed = true;
+            } else {
+                input.style.borderColor = '#555'; // Reset border color
+            }
+        });
+
+        if (customValidationFailed) {
+            console.log("Validation failed.")
+            alert('Please fill out all required fields.');
+            return; // Exit the function without submitting the form
+        }
+
+        // If custom validation passes, manually submit the form
+        if (contactForm.reportValidity()) {
+          console.log("Validation passed. Submitting form...");
+          contactForm.submit();
+        }
+        else {
+          console.log("Validation failed. Builtin validation triggered...");
+        }
+    });
+
     // Setup form download button
     const download_html_button = document.createElement('button');
     download_html_button.setAttribute('type', 'button');
@@ -338,9 +398,14 @@ fetch('config.json')
 
     // Add event to listen for click
     download_html_button.addEventListener('click', () => {
+
+        // Get inputs to store
         const formData = {};
         const inputs = form.querySelectorAll('input, textarea, select');
         let valid = true;
+
+        // Log to console
+        console.log("Beginning download validation");
 
         inputs.forEach(input => {
             let fieldValue = input.value;
@@ -364,6 +429,9 @@ fetch('config.json')
         });
 
         if (valid) {
+            // Log to console
+            console.log("Validation passed. Downloading form...");
+
             // Initialize an array to store all promises
             const promises = [];
 
@@ -382,9 +450,6 @@ fetch('config.json')
 
             // Wait for all promises to resolve
             Promise.all(promises).then(() => {
-              // All file uploads are completed
-              console.log("After handleFileUpload: " + JSON.stringify(formData));
-
               // Generate HTML content
               const htmlContent = generateHtmlContent(formData);
 
@@ -415,26 +480,4 @@ fetch('config.json')
 })
 .catch(error => {
     handleConfigError(error);
-});
-
-// Custom validation for select elements
-document.getElementById("contact-form").addEventListener("submit", function(event) {
-  if (!this.checkValidity()) {
-    // Built-in validation failed, no need to continue
-    return;
-  }
-
-  // Custom validation for select elements
-  var selectElements = this.querySelectorAll("select[required]");
-  for (var i = 0; i < selectElements.length; i++) {
-    if (selectElements[i].value === "") {
-      event.preventDefault(); // Prevent form submission
-      alert("Please select an option.");
-
-      // Scroll to the element
-      selectElements[i].scrollIntoView({ behavior: "smooth", block: "center" });
-
-      return;
-    }
-  }
 });
