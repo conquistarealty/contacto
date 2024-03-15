@@ -11,13 +11,13 @@ from typing import Optional
 from typing import Tuple
 
 import pytest
+import requests
 from bs4 import BeautifulSoup
 from flask import Flask
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from seleniumbase import BaseCase
 
-from tests.conftest import write_config_file
 from tests.schema import check_config_schema
 
 
@@ -290,9 +290,7 @@ def test_custom_title_works(
 
 
 @pytest.mark.website
-def test_form_backend_updated(
-    sb: BaseCase, live_session_web_app_url: str, submit_route: str
-) -> None:
+def test_form_backend_updated(sb: BaseCase, live_session_web_app_url: str) -> None:
     """Check that the form backend url has been updated correctly."""
     # open the webpage
     sb.open(live_session_web_app_url)
@@ -310,7 +308,7 @@ def test_form_backend_updated(
     assert form_target is not None
 
     # now check that it is the right url
-    assert form_target == live_session_web_app_url + submit_route
+    assert form_target == live_session_web_app_url + "/submit"
 
 
 @pytest.mark.website
@@ -530,26 +528,31 @@ def test_form_download_required_constraint(
     sb.save_screenshot_to_logs()
 
 
+@pytest.mark.debug
 @pytest.mark.feature
 def test_select_multiple_options(
     sb: BaseCase,
-    live_function_web_app_url: str,
-    submit_route: str,
-    function_websrc_tmp_dir: Path,
-    function_web_app: Flask,
+    live_session_web_app_url: str,
     multiple_select_options_config: Dict[str, Any],
 ) -> None:
     """Confirm multiple options can be selected."""
-    # add form backend
-    multiple_select_options_config["form_backend_url"] = (
-        live_function_web_app_url + submit_route
+    # update config
+    response = requests.post(
+        live_session_web_app_url + "/update_config", json=multiple_select_options_config
     )
 
-    # update config file for testing multi select options
-    write_config_file(multiple_select_options_config, function_websrc_tmp_dir)
+    # check response
+    assert response.status_code == 200
+
+    # get token
+    token = response.json().get("token")
+    assert token is not None
+
+    # update site URL
+    site_url = f"{live_session_web_app_url}?token={token}"
 
     # open site
-    sb.open(live_function_web_app_url)
+    sb.open(site_url)
 
     # get question name
     question_name = multiple_select_options_config["questions"][0]["name"]
@@ -611,26 +614,31 @@ def test_select_multiple_options(
     sb.save_screenshot_to_logs()
 
 
+@pytest.mark.debug
 @pytest.mark.feature
 def test_select_default_submission_rejected(
     sb: BaseCase,
-    live_function_web_app_url: str,
-    submit_route: str,
-    function_websrc_tmp_dir: Path,
-    function_web_app: Flask,
+    live_session_web_app_url: str,
     multiple_select_options_config: Dict[str, Any],
 ) -> None:
     """Confirm that default select options will not pass for submission."""
-    # add form backend
-    multiple_select_options_config["form_backend_url"] = (
-        live_function_web_app_url + submit_route
+    # update config
+    response = requests.post(
+        live_session_web_app_url + "/update_config", json=multiple_select_options_config
     )
 
-    # update config file for testing multi select options
-    write_config_file(multiple_select_options_config, function_websrc_tmp_dir)
+    # check response
+    assert response.status_code == 200
+
+    # get token
+    token = response.json().get("token")
+    assert token is not None
+
+    # update site URL
+    site_url = f"{live_session_web_app_url}?token={token}"
 
     # open site
-    sb.open(live_function_web_app_url)
+    sb.open(site_url)
 
     # get form
     form_element = sb.get_element("form")

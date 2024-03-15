@@ -118,7 +118,6 @@ def test_serve_scripts_route(session_web_app: Flask) -> None:
 @pytest.mark.fixture
 def test_submit_form_route(
     session_web_app: Flask,
-    submit_route: str,
     dummy_form_post_data: Dict[str, Any],
     dummy_txt_file_data_url: str,
 ) -> None:
@@ -128,7 +127,7 @@ def test_submit_form_route(
 
     # submit response
     response = client.post(
-        submit_route, data=dummy_form_post_data, content_type="multipart/form-data"
+        "/submit", data=dummy_form_post_data, content_type="multipart/form-data"
     )
 
     # assert that the response status code is 200 (OK)
@@ -178,6 +177,81 @@ def test_submit_form_route(
         assert (
             form_data[key] == expected_form_data[key]
         ), "Form data in HTML response does not match expected form data"
+
+
+@pytest.mark.flask
+@pytest.mark.fixture
+def test_update_config_route(session_web_app: Flask) -> None:
+    """Test the route for updating the configuration."""
+    client = session_web_app.test_client()
+
+    # send a POST request with JSON data to update the configuration
+    new_config = {"key": "value"}
+    post_response = client.post("/update_config", json=new_config)
+
+    # check that the POST request was successful (status code 200)
+    assert post_response.status_code == 200
+
+    # check json exists
+    assert post_response.json is not None
+
+    # retrieve the token from the response
+    token = post_response.json.get("token")
+    assert token is not None
+
+    # send a GET request to "/config" to retrieve the updated config
+    get_response = client.get("/config.json")
+
+    # check if the GET request was successful (status code 200)
+    assert get_response.status_code == 200
+
+    # check the response content to verify the updated config data
+    config_data = json.loads(get_response.data)
+    assert config_data == new_config
+
+
+@pytest.mark.flask
+@pytest.mark.fixture
+def test_reset_config_route(session_web_app: Flask) -> None:
+    """Test the route for resetting the configuration."""
+    client = session_web_app.test_client()
+
+    # store original config data
+    old_config_data_response = client.get("/config.json")
+    old_config_data = json.loads(old_config_data_response.data)
+
+    # send a POST request with JSON data to update the configuration
+    new_config = {"key": "value"}
+    post_response = client.post("/update_config", json=new_config)
+
+    # check that the POST request was successful (status code 200)
+    assert post_response.status_code == 200
+
+    # now, send a GET request to "/config" to retrieve the updated config
+    get_response = client.get("/config.json")
+
+    # check if the GET request was successful (status code 200)
+    assert get_response.status_code == 200
+
+    # check the response content to verify the updated config data
+    config_data = json.loads(get_response.data)
+    assert config_data == new_config
+
+    # send a GET request to reset the configuration
+    reset_response = client.get("/reset_config")
+
+    # check that the request was successful (status code 200)
+    assert reset_response.status_code == 200
+
+    # now, send a GET request to "/config" to retrieve the reset config
+    reset_config_response = client.get("/config.json")
+
+    # check if the GET request for reset config was successful (status code 200)
+    assert reset_config_response.status_code == 200
+
+    # check the response content to verify the reset config data
+    reset_config_data = json.loads(reset_config_response.data)
+    assert reset_config_data == old_config_data
 
 
 @pytest.mark.flask
