@@ -26,7 +26,8 @@
       "label": [
           "This is a multiline label. It is intended to make it easier to write",
           "multiline questions and include <i>interesting</i>",
-          "<a href='https://developer.mozilla.org/en-US/docs/Web/HTML'>HTML Syntax</a>",
+          "<a href='https://developer.mozilla.org/en-US/docs/Web/HTML'",
+          "target='_blank'>HTML Syntax</a>",
           "directly in your <i>question text</i>"
       ],
       "name": "multiline_html_question",
