@@ -42,7 +42,7 @@ body {
 
 .email-placeholder:hover {
     cursor: pointer;
-    color: orange;
+    color: #ffa500;
 }
 
 .form-container {
