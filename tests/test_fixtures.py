@@ -43,14 +43,14 @@ def test_websrc_in_temp_dir(
 
 @pytest.mark.fixture
 def test_config_keys_in_form_inputs(
-    default_site_config: Dict[str, Any], form_inputs: Dict[str, Any]
+    default_site_config: Dict[str, Any], dummy_form_inputs: Dict[str, Any]
 ) -> None:
     """Check that keys from config.json are present in form input testing fixture."""
     # get types from questions section of config.json
     question_types = [q["type"] for q in default_site_config["questions"]]
 
     # check config question types missing form inputs (if any)
-    missing_keys = set(question_types) - set(form_inputs)
+    missing_keys = set(question_types) - set(dummy_form_inputs)
 
     # no missing keys
     assert (
@@ -287,6 +287,12 @@ def test_session_config_form_backend_updated(
 
     # check configs match
     assert config[key] == json_data[key]
+
+
+@pytest.mark.fixture
+def test_all_inputs_config_schema(all_inputs_config: Dict[str, Any]) -> None:
+    """Check that the config.json schema for all inputs config is correct."""
+    assert check_config_schema(all_inputs_config), "Error in all inputs config fixture."
 
 
 @pytest.mark.fixture

@@ -173,11 +173,11 @@ def dummy_form_post_data(dummy_txt_file_stream) -> Dict[str, Any]:
     }
 
 
-@pytest.fixture(scope="session")
-def dummy_jpg_file_path(session_tmp_dir: Path) -> Path:
+@pytest.fixture(scope="function")
+def dummy_jpg_file_path(tmp_path: Path) -> Path:
     """Create a dummy JPEG image."""
     # create image dir
-    img_dir = session_tmp_dir / "images"
+    img_dir = tmp_path / "images"
     img_dir.mkdir()
 
     # create a dummy image
@@ -188,7 +188,7 @@ def dummy_jpg_file_path(session_tmp_dir: Path) -> Path:
     return img_path
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def dummy_jpg_data_url(dummy_jpg_file_path) -> str:
     """Create a data URL for the dummy JPEG file."""
     # read the content of the file
@@ -202,8 +202,10 @@ def dummy_jpg_data_url(dummy_jpg_file_path) -> str:
     return f"data:image/jpeg;base64,{base64_content}"
 
 
-@pytest.fixture(scope="session")
-def form_inputs(dummy_jpg_file_path: Path, dummy_jpg_data_url: str) -> Dict[str, Any]:
+@pytest.fixture(scope="function")
+def dummy_form_inputs(
+    dummy_jpg_file_path: Path, dummy_jpg_data_url: str
+) -> Dict[str, Any]:
     """Defines the values to be submitted for each input type during form tests."""
     return {
         "date": {"date": "01012000"},
@@ -293,6 +295,46 @@ def live_session_web_app_url(session_web_app: Flask) -> str:
 
     # get url
     return f"http://localhost:{port}"
+
+
+@pytest.fixture(scope="function")
+def all_inputs_config(dummy_form_inputs: Dict[str, Any]) -> Dict[str, Any]:
+    """Create config file fixture for testing all supported input types."""
+    # get base config
+    config = base_custom_config()
+
+    # now create questions based on supported input types
+    questions = []
+    for idx, input_type in enumerate(dummy_form_inputs.keys()):
+        # basic question attrs
+        q = {
+            "label": f"Question{idx+1}",
+            "name": f"testing_{input_type}_input_type",
+            "type": input_type,
+            "required": True,
+        }
+
+        # check for selectbox type
+        if input_type == "selectbox":
+            # setup options
+            options = [
+                {"label": "Option1", "value": "Opt1"},
+                {"label": "Option2", "value": "Opt2"},
+                {"label": "Option3", "value": "Opt3"},
+                {"label": "Option4", "value": "Opt4"},
+            ]
+
+            # add them
+            q["options"] = options
+
+        # update questions
+        questions.append(q)
+
+    # now update questions
+    config["questions"] = questions
+
+    # done
+    return config
 
 
 @pytest.fixture(scope="function")

@@ -151,7 +151,7 @@ def fill_out_form(
                 test_value = convert_to_isoformat(**test_value)
 
             # check if file tuple
-            if isinstance(test_value, tuple):
+            elif isinstance(test_value, tuple):
                 # unpack
                 file_path, data_url = test_value
 
@@ -351,7 +351,7 @@ def test_form_backend_updated(sb: BaseCase, live_session_web_app_url: str) -> No
 def test_form_submission(
     sb: BaseCase,
     live_session_web_app_url: str,
-    form_inputs: Dict[str, Any],
+    dummy_form_inputs: Dict[str, Any],
     session_web_app: Flask,
 ) -> None:
     """Check that the given form upon completion can be succesfully submitted."""
@@ -370,8 +370,11 @@ def test_form_submission(
 
     # fill out form
     submitted_input = {
-        k: v for k, v in fill_out_form(form_element, config, form_inputs)
+        k: v for k, v in fill_out_form(form_element, config, dummy_form_inputs)
     }
+
+    # save screeshot for comfirmation of form entries
+    sb.save_screenshot_to_logs()
 
     # get send button ...
     send_button = form_element.find_element(By.ID, "send_button")
@@ -403,7 +406,7 @@ def test_form_submission(
             value1 == value2
         ), f"Submitted input: {value1} differs from received: {value2}"
 
-    # save screenshot for confirmation
+    # save screenshot for confirmation of response
     sb.save_screenshot_to_logs()
 
 
@@ -456,7 +459,7 @@ def test_form_download(
     sb: BaseCase,
     live_session_web_app_url: str,
     session_web_app: Flask,
-    form_inputs: Dict[str, Any],
+    dummy_form_inputs: Dict[str, Any],
 ) -> None:
     """Check that the given form upon completion can be succesfully downloaded."""
     # get config file
@@ -474,8 +477,11 @@ def test_form_download(
 
     # fill out form
     submitted_input = {
-        k: v for k, v in fill_out_form(form_element, config, form_inputs)
+        k: v for k, v in fill_out_form(form_element, config, dummy_form_inputs)
     }
+
+    # save screeshot for comfirmation of form entries
+    sb.save_screenshot_to_logs()
 
     # get download button ...
     download_button = form_element.find_element(By.ID, "download_button")
@@ -561,6 +567,78 @@ def test_form_download_required_constraint(
     assert all(check_required_inputs_border_red(page_source["after"]))
 
     # save screenshot for confirmation
+    sb.save_screenshot_to_logs()
+
+
+@pytest.mark.feature
+def test_all_supported_inputs(
+    sb: BaseCase,
+    live_session_web_app_url: str,
+    all_inputs_config: Dict[str, Any],
+    dummy_form_inputs: Dict[str, Any],
+) -> None:
+    """Testing all supported inputs pass correctly."""
+    # update config
+    response = requests.post(
+        live_session_web_app_url + "/update_config", json=all_inputs_config
+    )
+
+    # check response
+    assert response.status_code == 200
+
+    # get token
+    token = response.json().get("token")
+    assert token is not None
+
+    # update site URL
+    site_url = f"{live_session_web_app_url}?token={token}"
+
+    # open site
+    sb.open(site_url)
+
+    # find the form element
+    form_element = sb.get_element("form")
+
+    # fill out form
+    submitted_input = {
+        k: v
+        for k, v in fill_out_form(form_element, all_inputs_config, dummy_form_inputs)
+    }
+
+    # save screeshot for comfirmation of form entries
+    sb.save_screenshot_to_logs()
+
+    # get send button ...
+    send_button = form_element.find_element(By.ID, "send_button")
+
+    # ... now click it
+    send_button.click()
+
+    # check that the form was submitted
+    sb.assert_text("Contact Form Response")
+
+    # get the HTML content of the response
+    response_html = sb.get_page_source()
+
+    # get received input from Flask response html
+    received_input = {k: v for k, v in extract_received_form_input(response_html)}
+
+    # check keys are same
+    missing_keys = set(submitted_input) - set(received_input)
+    assert not missing_keys, f"Keys are not the same: {missing_keys}"
+
+    # now check values
+    for key in submitted_input.keys():
+        # get values
+        value1 = submitted_input[key]
+        value2 = received_input[key]
+
+        # check
+        assert (
+            value1 == value2
+        ), f"Submitted input: {value1} differs from received: {value2}"
+
+    # save screenshot for confirmation of response
     sb.save_screenshot_to_logs()
 
 
