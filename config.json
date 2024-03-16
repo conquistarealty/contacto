@@ -40,7 +40,12 @@
       "type": "selectbox",
       "required": true,
       "options": [
-        {"label": "--Choose your favorite color(s)--", "value": "", "selected": true, "disabled": true},
+        {
+          "label": "--Choose your favorite color(s)--",
+          "value": "",
+          "selected": true,
+          "disabled": true
+        },
         {"label": "Red", "value": "red"},
         {"label": "Blue", "value": "blue"},
         {"label": "Green", "value": "green"},
@@ -103,7 +108,12 @@
       "type": "selectbox",
       "required": true,
       "options": [
-        {"label": "--Select all that apply--", "value": "", "selected": true, "disabled": true},
+        {
+          "label": "--Select all that apply--",
+          "value": "",
+          "selected": true,
+          "disabled": true
+        },
         {"label": "USA", "value": "USA"},
         {"label": "Canada", "value": "CAN"},
         {"label": "United Kingdom", "value": "UK"},
