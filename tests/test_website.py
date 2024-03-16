@@ -735,7 +735,6 @@ def test_ignore_file_uploads(
     assert updated_enctype_value == "application/x-www-form-urlencoded"
 
 
-@pytest.mark.debug
 @pytest.mark.feature
 def test_instructions_added(
     sb: BaseCase, live_session_web_app_url: str, instructions_config: Dict[str, Any]
@@ -762,17 +761,20 @@ def test_instructions_added(
     # get instructions text
     form_instruct_text = sb.get_text("#instructions")
 
+    # confirm no HTML
+    soup = BeautifulSoup(form_instruct_text, "html.parser")
+    assert len(soup.find_all()) == 0
+
     # get original instruct multiline str (list)
     original_text = " ".join(instructions_config["instructions"])
 
     # now get diff ratio
     diff_seq = SequenceMatcher(None, form_instruct_text, original_text)
 
-    # check email in text
+    # check strings are similar enough
     assert diff_seq.real_quick_ratio()
 
 
-@pytest.mark.debug
 @pytest.mark.feature
 def test_email_added(
     sb: BaseCase, live_session_web_app_url: str, instructions_config: Dict[str, Any]

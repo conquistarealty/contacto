@@ -380,7 +380,6 @@ def test_ignore_upload_custom_attrs(ignore_upload_config: Dict[str, Any]) -> Non
     ), "Custom attributes not properly set."
 
 
-@pytest.mark.debug
 @pytest.mark.fixture
 def test_instructions_config_schema(instructions_config: Dict[str, Any]) -> None:
     """Check that the given config.json schema for iinstructions is correct."""
@@ -389,7 +388,6 @@ def test_instructions_config_schema(instructions_config: Dict[str, Any]) -> None
     ), "Error in instructions config fixture."
 
 
-@pytest.mark.debug
 @pytest.mark.fixture
 def test_confirm_instructions_attr_set(instructions_config: Dict[str, Any]) -> None:
     """Confirm that the instructions attribute is set."""
@@ -400,7 +398,6 @@ def test_confirm_instructions_attr_set(instructions_config: Dict[str, Any]) -> N
     assert isinstance(instructions_config["instructions"], list)
 
 
-@pytest.mark.debug
 @pytest.mark.fixture
 def test_email_placeholder_present(instructions_config: Dict[str, Any]) -> None:
     """Confirm that the email-placeholder class is present."""
