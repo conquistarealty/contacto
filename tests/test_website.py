@@ -2,6 +2,7 @@
 
 import json
 from datetime import datetime
+from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any
 from typing import Dict
@@ -267,11 +268,16 @@ def test_email_in_instructions(
     # temp website src
     sb.open(live_session_web_app_url)
 
-    # get instructions text
-    instruct_text = sb.get_text("#instructions")
+    # get instructions if present
+    instructions = default_site_config.get("instructions", False)
 
-    # check email in text
-    assert default_site_config["email"] in instruct_text
+    # check for email placeholder class in config
+    if instructions and "email-placeholder" in instructions:
+        # get instructions text
+        instruct_text = sb.get_text("#instructions")
+
+        # check email in text
+        assert default_site_config["email"] in instruct_text
 
 
 @pytest.mark.website
@@ -727,3 +733,71 @@ def test_ignore_file_uploads(
 
     # make sure it's multipart
     assert updated_enctype_value == "application/x-www-form-urlencoded"
+
+
+@pytest.mark.debug
+@pytest.mark.feature
+def test_instructions_added(
+    sb: BaseCase, live_session_web_app_url: str, instructions_config: Dict[str, Any]
+) -> None:
+    """Check that instrucstions in config file get added to website."""
+    # update config
+    response = requests.post(
+        live_session_web_app_url + "/update_config", json=instructions_config
+    )
+
+    # check response
+    assert response.status_code == 200
+
+    # get token
+    token = response.json().get("token")
+    assert token is not None
+
+    # update site URL
+    site_url = f"{live_session_web_app_url}?token={token}"
+
+    # open new site
+    sb.open(site_url)
+
+    # get instructions text
+    form_instruct_text = sb.get_text("#instructions")
+
+    # get original instruct multiline str (list)
+    original_text = " ".join(instructions_config["instructions"])
+
+    # now get diff ratio
+    diff_seq = SequenceMatcher(None, form_instruct_text, original_text)
+
+    # check email in text
+    assert diff_seq.real_quick_ratio()
+
+
+@pytest.mark.debug
+@pytest.mark.feature
+def test_email_added(
+    sb: BaseCase, live_session_web_app_url: str, instructions_config: Dict[str, Any]
+) -> None:
+    """Confirm email is being added if present."""
+    # update config
+    response = requests.post(
+        live_session_web_app_url + "/update_config", json=instructions_config
+    )
+
+    # check response
+    assert response.status_code == 200
+
+    # get token
+    token = response.json().get("token")
+    assert token is not None
+
+    # update site URL
+    site_url = f"{live_session_web_app_url}?token={token}"
+
+    # open new site
+    sb.open(site_url)
+
+    # get instructions text
+    form_instruct_text = sb.get_text("#instructions")
+
+    # check email
+    assert instructions_config["email"] in form_instruct_text

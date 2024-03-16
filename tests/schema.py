@@ -87,17 +87,30 @@ class Config(Schema):
     questions: list
     form_backend_url: Optional[str] = None
     ignore_file_upload: Optional[bool] = None
+    instructions: Optional[list | str] = None
 
     def __post_init__(self):
         """Post initialization method to validate questions."""
         # check type
         self.validate_type()
 
+        # validate questions
         validated_questions = []
         for question in self.questions:
             validated_question = Question(**question)
             validated_questions.append(validated_question)
         self.questions = validated_questions
+
+        # validate instructions
+        if isinstance(self.instructions, list):
+            # loop through each string
+            valid_instructions = []
+            for line in self.instructions:
+                assert isinstance(line, str), "Instructions list only allows strings."
+                valid_instructions.append(line)
+
+            # now join all strings and update instructions
+            self.instructions = " ".join(valid_instructions)
 
 
 def check_config_schema(config: dict) -> bool:

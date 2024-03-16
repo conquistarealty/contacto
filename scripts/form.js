@@ -275,6 +275,17 @@ fetch('config.json')
       }
     }
 
+    // Populate instructions element if present
+    if (data.instructions) {
+        const instructionsElement = document.getElementById('instructions');
+        if (Array.isArray(data.instructions)) {
+            // If instructions is an array, join its elements with line breaks
+            instructionsElement.innerHTML = data.instructions.join(' ');
+        } else {
+            instructionsElement.innerHTML = data.instructions;
+        }
+    }
+
     // Update email placeholder in instructions
     updateEmailPlaceholders(email);
 

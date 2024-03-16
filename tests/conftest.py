@@ -353,3 +353,33 @@ def ignore_upload_config() -> Dict[str, Any]:
 
     # updated
     return config
+
+
+@pytest.fixture(scope="function")
+def instructions_config() -> Dict[str, Any]:
+    """Custom config file fixture with multiline instructions."""
+    # get base config
+    config = base_custom_config()
+
+    # set ignore
+    config["instructions"] = [
+        "<p>",
+        "Fill out the form below, and click <b>Send</b> to submit it.",
+        "If that should fail, simply click <b>Download Form</b> and manually",
+        "email the completed form to:",
+        "<strong class='email-placeholder'>[Email Address]</strong>.",
+        "</p>",
+    ]
+
+    # update questions
+    config["questions"] = [
+        {
+            "label": "Question 1",
+            "name": "q1",
+            "type": "text",
+            "required": True,
+        }
+    ]
+
+    # updated
+    return config
