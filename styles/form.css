@@ -110,3 +110,15 @@ button:last-child {
 button:hover {
     background-color: #45a049; /* Darker green on hover */
 }
+
+a {
+    color: #1e90ff; /* Blue color for links */
+    text-decoration: none; /* Remove underline from links */
+    font-weight: bold; /* Make the link text bold */
+    cursor: pointer; /* Change cursor to pointer */
+}
+
+a:hover {
+    color: #ffa500; /* Orange color for links on hover */
+    text-decoration: underline; /* Add underline on hover */
+}

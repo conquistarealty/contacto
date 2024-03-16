@@ -383,3 +383,31 @@ def instructions_config() -> Dict[str, Any]:
 
     # updated
     return config
+
+
+@pytest.fixture(scope="function")
+def multiline_question_label_config() -> Dict[str, Any]:
+    """Custom config file fixture with multiline question label."""
+    # get base config
+    config = base_custom_config()
+
+    # set MDN ref
+    mdn_ref = "https://developer.mozilla.org/en-US/docs/Web/HTML"
+
+    # update questions
+    config["questions"] = [
+        {
+            "label": [
+                "This is a multiline label. It is intended to make it easier to write",
+                "multiline questions and include <i>interesting</i>",
+                f"<a id='mdn_html_docs' href={mdn_ref!r}>HTML syntax</a>",
+                "directly in your <i>question text</i>",
+            ],
+            "name": "multiline_html_question",
+            "type": "text",
+            "required": True,
+        }
+    ]
+
+    # updated
+    return config

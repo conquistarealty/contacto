@@ -399,9 +399,44 @@ def test_confirm_instructions_attr_set(instructions_config: Dict[str, Any]) -> N
 
 
 @pytest.mark.fixture
+def test_html_instructions_present(instructions_config: Dict[str, Any]) -> None:
+    """Check that there is HTML in the instructions."""
+    # get instructions
+    instruct_text = " ".join(instructions_config["instructions"])
+
+    # confirm HTML
+    soup = BeautifulSoup(instruct_text, "html.parser")
+    assert len(soup.find_all()) > 0
+
+
+@pytest.mark.fixture
 def test_email_placeholder_present(instructions_config: Dict[str, Any]) -> None:
     """Confirm that the email-placeholder class is present."""
     # convert to full string
     instruction_text = " ".join(instructions_config["instructions"])
 
     assert "email-placeholder" in instruction_text
+
+
+@pytest.mark.fixture
+def test_label_list_type(multiline_question_label_config: Dict[str, Any]) -> None:
+    """Check that the type of the question label is a list."""
+    # get question
+    question = multiline_question_label_config["questions"][0]
+
+    # now check type of questions
+    assert isinstance(question["label"], list)
+
+
+@pytest.mark.fixture
+def test_html_label_present(multiline_question_label_config: Dict[str, Any]) -> None:
+    """Check that HTML is present in the question label."""
+    # get question
+    question = multiline_question_label_config["questions"][0]
+
+    # get instructions
+    label_text = " ".join(question["label"])
+
+    # confirm HTML
+    soup = BeautifulSoup(label_text, "html.parser")
+    assert len(soup.find_all()) > 0

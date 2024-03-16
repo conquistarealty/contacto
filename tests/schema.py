@@ -47,7 +47,7 @@ class SelectBoxOptions(Schema):
 class Question(Schema):
     """Defines the question schema for config.json."""
 
-    label: str
+    label: list | str
     name: str
     type: str
     required: bool
@@ -59,7 +59,7 @@ class Question(Schema):
         # type validation
         self.validate_type()
 
-        # custom validation
+        # custom validation for selectbox input type
         if self.type == "selectbox":
             if not self.options:
                 raise ValueError("Selectbox question must have options.")
@@ -75,6 +75,17 @@ class Question(Schema):
                     UserWarning,
                     stacklevel=2,
                 )
+
+        # validate label
+        if isinstance(self.label, list):
+            # loop through each string
+            valid_label = []
+            for line in self.label:
+                assert isinstance(line, str), "Label list only allows strings."
+                valid_label.append(line)
+
+            # now join all strings and update instructions
+            self.label = " ".join(valid_label)
 
 
 @dataclass

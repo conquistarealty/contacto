@@ -301,7 +301,12 @@ fetch('config.json')
     data.questions.forEach(question => {
         // Create labels for each question
         const label = document.createElement('label');
-        label.textContent = question.label + ':';
+        if (Array.isArray(question.label)) {
+            // Concatenate the label array with " " as separator
+            label.innerHTML = question.label.join(' ') + ':';
+        } else {
+            label.innerHTML = question.label + ':';
+        }
         label.style.color = '#ddd'; // Light text color
         form.appendChild(label);
         form.appendChild(document.createElement('br'));

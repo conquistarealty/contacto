@@ -774,6 +774,9 @@ def test_instructions_added(
     # check strings are similar enough
     assert diff_seq.real_quick_ratio()
 
+    # get screenshot
+    sb.save_screenshot_to_logs()
+
 
 @pytest.mark.feature
 def test_email_added(
@@ -803,3 +806,79 @@ def test_email_added(
 
     # check email
     assert instructions_config["email"] in form_instruct_text
+
+    # get screenshot
+    sb.save_screenshot_to_logs()
+
+
+@pytest.mark.feature
+def test_html_label_rendered(
+    sb: BaseCase,
+    live_session_web_app_url: str,
+    multiline_question_label_config: Dict[str, Any],
+) -> None:
+    """Confirm that the HTML label is present and rendered correctly."""
+    # update config
+    response = requests.post(
+        live_session_web_app_url + "/update_config",
+        json=multiline_question_label_config,
+    )
+
+    # check response
+    assert response.status_code == 200
+
+    # get token
+    token = response.json().get("token")
+    assert token is not None
+
+    # update site URL
+    site_url = f"{live_session_web_app_url}?token={token}"
+
+    # open new site
+    sb.open(site_url)
+
+    # get screenshot
+    sb.save_screenshot_to_logs()
+
+    # get form
+    form_element = sb.get_element("form")
+
+    # get label
+    label = form_element.find_element(By.TAG_NAME, "label")
+
+    # confirm no HTML
+    soup = BeautifulSoup(label.text, "html.parser")
+    assert len(soup.find_all()) == 0
+
+    # get question attr
+    question = multiline_question_label_config["questions"][0]
+
+    # get unrendered label text
+    unrendered_label_text = " ".join(question["label"])
+
+    # now get diff ratio
+    diff_seq = SequenceMatcher(None, label.text, unrendered_label_text)
+
+    # check strings are similar enough
+    assert diff_seq.real_quick_ratio()
+
+    # now get current URL
+    preclick_url = sb.get_current_url()
+
+    # find the link
+    link_element = form_element.find_element(By.TAG_NAME, "a")
+
+    # click on the <a> link
+    link_element.click()
+
+    # now get new url
+    postclick_url = sb.get_current_url()
+
+    # make sure URLs differ
+    assert preclick_url != postclick_url
+
+    # check for mozilla
+    assert "mozilla" in postclick_url
+
+    # get screenshot
+    sb.save_screenshot_to_logs()
