@@ -86,6 +86,7 @@ class Config(Schema):
     subject: str
     questions: list
     form_backend_url: Optional[str] = None
+    ignore_file_upload: Optional[bool] = None
 
     def __post_init__(self):
         """Post initialization method to validate questions."""

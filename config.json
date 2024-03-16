@@ -2,6 +2,7 @@
   "subject": "Your Form Subject",
   "title": "Your Custom Title",
   "form_backend_url": null,
+  "ignore_file_upload": true,
   "email": "your_email@example.com",
   "questions": [
     {

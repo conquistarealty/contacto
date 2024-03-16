@@ -275,6 +275,31 @@ def test_email_in_instructions(
 
 
 @pytest.mark.website
+def test_file_uploads_enabled(
+    sb: BaseCase,
+    live_session_web_app_url: str,
+    default_site_config: Dict[str, Any],
+) -> None:
+    """Test that the file uploads are enabled on the website."""
+    # check config for file upload attr
+    assert not default_site_config[
+        "ignore_file_upload"
+    ], "Default site config should not ignore file uploads."
+
+    # open initial site
+    sb.open(live_session_web_app_url)
+
+    # get form
+    form_element = sb.get_element("form")
+
+    # get the enctype attribute
+    enctype_value = form_element.get_attribute("enctype")
+
+    # make sure it's multipart
+    assert enctype_value == "multipart/form-data"
+
+
+@pytest.mark.website
 def test_custom_title_works(
     sb: BaseCase, live_session_web_app_url: str, default_site_config: Dict[str, Any]
 ) -> None:
@@ -528,7 +553,6 @@ def test_form_download_required_constraint(
     sb.save_screenshot_to_logs()
 
 
-@pytest.mark.debug
 @pytest.mark.feature
 def test_select_multiple_options(
     sb: BaseCase,
@@ -614,7 +638,6 @@ def test_select_multiple_options(
     sb.save_screenshot_to_logs()
 
 
-@pytest.mark.debug
 @pytest.mark.feature
 def test_select_default_submission_rejected(
     sb: BaseCase,
@@ -669,3 +692,38 @@ def test_select_default_submission_rejected(
 
     # get screenshot
     sb.save_screenshot_to_logs()
+
+
+@pytest.mark.feature
+def test_ignore_file_uploads(
+    sb: BaseCase,
+    live_session_web_app_url: str,
+    ignore_upload_config: Dict[str, Any],
+) -> None:
+    """Confirm that setting ignore file upload attrs works."""
+    # update config
+    response = requests.post(
+        live_session_web_app_url + "/update_config", json=ignore_upload_config
+    )
+
+    # check response
+    assert response.status_code == 200
+
+    # get token
+    token = response.json().get("token")
+    assert token is not None
+
+    # update site URL
+    site_url = f"{live_session_web_app_url}?token={token}"
+
+    # open new site
+    sb.open(site_url)
+
+    # get form
+    updated_form_element = sb.get_element("form")
+
+    # get the enctype attribute
+    updated_enctype_value = updated_form_element.get_attribute("enctype")
+
+    # make sure it's multipart
+    assert updated_enctype_value == "application/x-www-form-urlencoded"

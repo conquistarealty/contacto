@@ -261,9 +261,12 @@ fetch('config.json')
       // Set form backend URL and enctype if available and not null
       form.setAttribute('action', formBackendUrl);
 
+      // Check for ignore file upload
+      const ignoreFileUpload = data.ignore_file_upload
+
       // Check if any question has type="file" in config.json
       const hasFileUpload = data.questions.some(question => question.type === 'file');
-      if (hasFileUpload) {
+      if (hasFileUpload && (!ignoreFileUpload)) {
           // If any question involves file upload use multipart encoding
           form.setAttribute('enctype', 'multipart/form-data');
       } else {

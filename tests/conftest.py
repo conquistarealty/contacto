@@ -97,6 +97,9 @@ def prepare_default_config(config: Dict[str, Any], src_path: Path) -> None:
     # update form backend
     config["form_backend_url"] = f"http://localhost:{port}{submit}"
 
+    # update ignore file uploads
+    config["ignore_file_upload"] = False
+
     # update input[type=file] accept attr
     for question in config["questions"]:
         # check type
@@ -318,6 +321,33 @@ def multiple_select_options_config() -> Dict[str, Any]:
                 {"label": "Australia", "value": "AUS"},
             ],
             "custom": {"multiple": True},
+        }
+    ]
+
+    # updated
+    return config
+
+
+@pytest.fixture(scope="function")
+def ignore_upload_config() -> Dict[str, Any]:
+    """Custom config file fixture for testing ignore file uploads."""
+    # get base config
+    config = base_custom_config()
+
+    # set ignore
+    config["ignore_file_upload"] = True
+
+    # update questions
+    config["questions"] = [
+        {
+            "label": "Upload funny memes",
+            "name": "meme_imgs",
+            "type": "file",
+            "required": True,
+            "custom": {
+                "multiple": True,
+                "accept": "*",
+            },
         }
     ]
 

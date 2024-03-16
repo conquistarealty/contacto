@@ -300,6 +300,16 @@ def test_multi_options_config_schema(
 
 
 @pytest.mark.fixture
+def test_multi_options_config_input_type(
+    multiple_select_options_config: Dict[str, Any]
+) -> None:
+    """Check that input[type=selectbox]."""
+    assert (
+        multiple_select_options_config["questions"][0]["type"] == "selectbox"
+    ), "Input type is not selectbox."
+
+
+@pytest.mark.fixture
 def test_multi_opts_config_multiple(
     multiple_select_options_config: Dict[str, Any]
 ) -> None:
@@ -332,3 +342,39 @@ def test_multi_opts_config_defaults(
 
     # now check results
     assert any(results)
+
+
+@pytest.mark.fixture
+def test_ignore_upload_config_schema(ignore_upload_config: Dict[str, Any]) -> None:
+    """Check that the given config.json schema for ignore uploads is correct."""
+    assert check_config_schema(
+        ignore_upload_config
+    ), "Error in ignore file upload config fixture."
+
+
+@pytest.mark.fixture
+def test_ignore_upload_config_input_type(ignore_upload_config: Dict[str, Any]) -> None:
+    """Check that input[type=file]."""
+    assert (
+        ignore_upload_config["questions"][0]["type"] == "file"
+    ), "Input type is not file."
+
+
+@pytest.mark.fixture
+def test_ignore_upload_attr_set(ignore_upload_config: Dict[str, Any]) -> None:
+    """Check that the fixture has the correct attribute set."""
+    assert ignore_upload_config[
+        "ignore_file_upload"
+    ], "Not configured to ignore file uploads."
+
+
+@pytest.mark.fixture
+def test_ignore_upload_custom_attrs(ignore_upload_config: Dict[str, Any]) -> None:
+    """Check that the cusom attributes are properly set."""
+    # get custom attrs
+    custom = ignore_upload_config["questions"][0]["custom"]
+
+    # now check
+    assert (
+        custom["multiple"] and custom["accept"] == "*"
+    ), "Custom attributes not properly set."
