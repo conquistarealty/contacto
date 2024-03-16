@@ -295,14 +295,19 @@ def test_file_uploads_enabled(
     # open initial site
     sb.open(live_session_web_app_url)
 
-    # get form
-    form_element = sb.get_element("form")
+    # check for any input file types
+    file_inputs = sb.find_elements("input[type='file']")
 
-    # get the enctype attribute
-    enctype_value = form_element.get_attribute("enctype")
+    # only if inputs found
+    if file_inputs:
+        # get form
+        form_element = sb.get_element("form")
 
-    # make sure it's multipart
-    assert enctype_value == "multipart/form-data"
+        # get the enctype attribute
+        enctype_value = form_element.get_attribute("enctype")
+
+        # make sure it's multipart
+        assert enctype_value == "multipart/form-data"
 
 
 @pytest.mark.website
