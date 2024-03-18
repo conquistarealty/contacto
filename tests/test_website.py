@@ -728,6 +728,69 @@ def test_select_multiple_options(
 
 
 @pytest.mark.feature
+def test_first_select_unselects_default(
+    sb: BaseCase,
+    live_session_web_app_url: str,
+    multiple_select_options_config: Dict[str, Any],
+    dummy_form_inputs: Dict[str, Any],
+) -> None:
+    """Confirm default select option is unselected after first selection clicked."""
+    # update config
+    response = requests.post(
+        live_session_web_app_url + "/update_config", json=multiple_select_options_config
+    )
+
+    # check response
+    assert response.status_code == 200
+
+    # get token
+    token = response.json().get("token")
+    assert token is not None
+
+    # update site URL
+    site_url = f"{live_session_web_app_url}?token={token}"
+
+    # open site
+    sb.open(site_url)
+
+    # find the select element using css selector
+    select_element = sb.find_element("select")
+
+    # get the selected option
+    default_option = select_element.find_element(
+        By.CSS_SELECTOR, "option[selected='selected']"
+    )
+
+    # make sure default is selected
+    assert "Select all that apply" in default_option.text
+
+    # save screeshot for comfirmation of defaults
+    sb.save_screenshot_to_logs()
+
+    # find the form element
+    form_element = sb.get_element("form")
+
+    # fill out form
+    _ = {
+        k: v
+        for k, v in fill_out_form(
+            form_element, multiple_select_options_config, dummy_form_inputs
+        )
+    }
+
+    # save screeshot for comfirmation of form entries
+    sb.save_screenshot_to_logs()
+
+    # get the selected option
+    selected_options = select_element.find_elements(
+        By.CSS_SELECTOR, "option[selected='selected']"
+    )
+
+    # make sure default is NOT selected
+    assert any(("Select all that apply" in opt.text for opt in selected_options))
+
+
+@pytest.mark.feature
 def test_select_default_submission_rejected(
     sb: BaseCase,
     live_session_web_app_url: str,
@@ -783,7 +846,6 @@ def test_select_default_submission_rejected(
     sb.save_screenshot_to_logs()
 
 
-@pytest.mark.debug
 @pytest.mark.feature
 def test_ignore_file_uploads(
     sb: BaseCase,
