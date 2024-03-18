@@ -783,11 +783,13 @@ def test_select_default_submission_rejected(
     sb.save_screenshot_to_logs()
 
 
+@pytest.mark.debug
 @pytest.mark.feature
 def test_ignore_file_uploads(
     sb: BaseCase,
     live_session_web_app_url: str,
     ignore_upload_config: Dict[str, Any],
+    dummy_form_inputs: Dict[str, Any],
 ) -> None:
     """Confirm that setting ignore file upload attrs works."""
     # update config
@@ -809,13 +811,61 @@ def test_ignore_file_uploads(
     sb.open(site_url)
 
     # get form
-    updated_form_element = sb.get_element("form")
+    form_element = sb.get_element("form")
 
     # get the enctype attribute
-    updated_enctype_value = updated_form_element.get_attribute("enctype")
+    enctype_value = form_element.get_attribute("enctype")
 
     # make sure it's multipart
-    assert updated_enctype_value == "application/x-www-form-urlencoded"
+    assert enctype_value == "application/x-www-form-urlencoded"
+
+    # get dummy file info
+    dummy_path, dummy_url = dummy_form_inputs["file"]
+
+    # update
+    dummy_form_inputs["file"] = (dummy_path, Path(dummy_path).name)
+
+    # fill out form
+    submitted_input = {
+        k: v
+        for k, v in fill_out_form(form_element, ignore_upload_config, dummy_form_inputs)
+    }
+
+    # save screeshot for comfirmation of form entries
+    sb.save_screenshot_to_logs()
+
+    # get send button ...
+    send_button = form_element.find_element(By.ID, "send_button")
+
+    # ... now click it
+    send_button.click()
+
+    # check that the form was submitted
+    sb.assert_text("Contact Form Response")
+
+    # get the HTML content of the response
+    response_html = sb.get_page_source()
+
+    # get received input from Flask response html
+    received_input = {k: v for k, v in extract_received_form_input(response_html)}
+
+    # check keys are same
+    missing_keys = set(submitted_input) - set(received_input)
+    assert not missing_keys, f"Keys are not the same: {missing_keys}"
+
+    # now check values
+    for key in submitted_input.keys():
+        # get values
+        value1 = submitted_input[key]
+        value2 = received_input[key]
+
+        # check
+        assert (
+            value1 == value2
+        ), f"Submitted input: {value1} differs from received: {value2}"
+
+    # save screenshot for confirmation of response
+    sb.save_screenshot_to_logs()
 
 
 @pytest.mark.feature
