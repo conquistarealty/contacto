@@ -50,11 +50,11 @@ software:
       {
         "label": [
           "This is a very long question that could span multiple lines and easily",
-          "extend of the page. It also can have an",
+          "extend off the page. It can also have an",
           "<a href='https://developer.mozilla.org/en-US/docs/Web/HTML'>HTML Link</a>",
-          "embedded into as mentioned in the previous feature explanation.",
-          "Aren't you glad that you can easily write LONG LONG questions and style or",
-          "add links to the questions using <b>HTML syntax</b>?"
+          "embedded into it as mentioned in the previous feature explanation.",
+          "You can easily write LONG LONG questions and style or add links to the",
+          "questions using <b>HTML syntax</b>."
         ],
         "name": "message",
         "type": "textarea",
@@ -70,7 +70,10 @@ software:
 
 + **email in usage instructions** by adding **HTML tag** with the `class` property set
   to `email-placeholder` placeholder, your *email* will be extracted from the
-  `config.json` file and rendered into the text.
+  `config.json` file and rendered into the text:
+  ```HTML
+  Send form to: <strong class='email-placeholder'>[Email Address]</strong>.
+  ```
 
 ## Usage
 Here we outline the `Parley` software's *intended* use. Specifically we will go over
