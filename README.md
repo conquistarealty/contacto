@@ -22,6 +22,53 @@ a **JSON** file (`config.json`), and for the software to be **RIGOROUSLY** teste
 _"once for all"_ solution for those who need a *simple*, *testable*, and *stable*
 *form solution* **now**.
 
+## Features
+Here we will attempt to list all the features that are *available* and *tested* in the
+software:
+
++ **configuration through JSON**: the website is meant to be configured/customized
+  through the `config.json` file (see below).
+
++ **HTML in configurable text**: all text meant to be *configured* through the
+  `config.json` file work with **HTML** tags (including `instructions`, and
+  `question` labels):
+  ```JSON
+  {
+    "instructions": "<i>All</i> work and <b>NO</b> play make Jack a dull boy.",
+  }
+  ```
+
++ **multiline strings with arrays**: all text meant to be *configured* through the
+  `config.json` file can be of type *string* or type *array* (i.e. `instructions`, and
+  `question` labels):
+  ```JSON
+  {
+    "questions": [
+      {
+        "label": [
+          "This is a very long question that could span multiple lines and easily",
+          "extend of the page. It also can have an",
+          "<a href='https://developer.mozilla.org/en-US/docs/Web/HTML'>HTML Link</a>",
+          "embedded into as mentioned in the previous feature explanation.",
+          "Aren't you glad that you can easily write LONG LONG questions and style or",
+          "add links to the questions using <b>HTML syntax</b>?"
+        ],
+        "name": "message",
+        "type": "textarea",
+        "required": true
+      }
+    ]
+  }
+  ```
+
++ **custom usage instructions**: the *instructions* for using the form have been made
+  configurable through the `config.json` file, allowing for a custom usage message to
+  be supplied to the client.
+
++ **email in usage instructions** by adding **HTML tag** with the `class` property set
+  to `email-placeholder` placeholder, your *email* will be extracted from the
+  `config.json` file and rendered into the text.
+
 ## Usage
 Here we outline the `Parley` software's *intended* use. Specifically we will go over
 the `config.json` schema and what is *supported* vs. *disallowed*.
