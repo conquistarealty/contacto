@@ -27,12 +27,14 @@ Here we outline the `Parley` software's *intended* use. Specifically we will go 
 the `config.json` schema and what is *supported* vs. *disallowed*.
 
 ### Configuration
-Below is the simplest possible *configuration* of the `Parley` software:
+Below is a minimal *configuration* of the `Parley` software:
 ```JSON
 {
+  "instructions": "Your custom form usage instructions",
   "subject": "Your Form Subject",
   "title": "Your Custom Title",
   "form_backend_url": null,
+  "ignore_file_upload": false,
   "email": "your_email@example.com",
   "questions": [
     {
@@ -48,26 +50,29 @@ The above *example config* file is written in **JSON**, and each *attribute* wil
 explained below in more detail (**NOTE**: attributes with a __*__ mark are
 **required**):
 
++ `instructions`: The (**optional**) custom form usage instructions.
 + `subject`(__*__): The *email subject* that will be submitted by the form.
 + `title`(__*__): The text that will be set in the **title** element.
 + `form_backend_url`: The (**optional**) form backend URL for submitting forms to.
++ `ignore_file_upload`: When true files will not be uploaded (**optional**).
 + `email`(__*__): The email address used by the **mailto** attribute and used in the
   *instructions* above the form.
 + `questions`(__*__): The questions used to dynamically populate the form.
   + `label`(__*__): The actual *question* text placed above the form input field.
-  + `name`(__*__): The *variable* name used when _"key"_ / _"value"_ pairs are generated
-    from the *user input* and sent as part of the *query string* to the **form target**.
+  + `name`(__*__): The *variable* name used as the _"key"_  in the
+    *form submission query string*.
   + `type`(__*__): The type of input to expect from the user (discussed below).
-  + `required`(__*__): A *boolean* value declaring whether the user **MUST** answer the
-    question, or if the question is **optional**.
+  + `required`(__*__): Questions with this value set to **true** must be answered
+    before form will submit.
 
 #### Basic Input Types
 As discussed above, there are a few different *input types* currently available. These
 are listed below:
 
-+ `email`
 + `date`
 + `datetime-local`
++ `email`
++ `file`
 + `number`
 + `selectbox`
 + `tel`
