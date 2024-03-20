@@ -8,10 +8,13 @@
 **Pronunciation:** /ˈpɑːrli/
 
 **Definition:**
-A formal discussion or negotiation between parties, especially enemies, typically to resolve a conflict or dispute peacefully. It often implies a temporary truce or cessation of hostilities to facilitate dialogue.
+A formal discussion or negotiation between parties, especially enemies, typically to
+resolve a conflict or dispute peacefully. It often implies a temporary truce or
+cessation of hostilities to facilitate dialogue.
 
 **Example Sentence:**
-The warring factions agreed to a parley at the neutral ground to seek a diplomatic solution to their long-standing conflict.
+The warring factions agreed to a parley at the neutral ground to seek a diplomatic
+solution to their long-standing conflict.
 
 ## Introduction
 The motivation behind this software is simple: to develop a completely static
