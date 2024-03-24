@@ -27,10 +27,10 @@ def check_files_subset(source_dir: Path, webfiles: Tuple[str, ...]) -> bool:
 
 @pytest.mark.fixture
 def test_websrc_in_project_dir(
-    project_directory: Path, website_files: Tuple[str, ...]
+    project_dir: Path, website_files: Tuple[str, ...]
 ) -> None:
     """Simply confirm that the website files are in the project dir path."""
-    assert check_files_subset(project_directory, website_files)
+    assert check_files_subset(project_dir, website_files)
 
 
 @pytest.mark.fixture
@@ -43,11 +43,11 @@ def test_websrc_in_temp_dir(
 
 @pytest.mark.fixture
 def test_config_keys_in_form_inputs(
-    default_site_config: Dict[str, Any], dummy_form_inputs: Dict[str, Any]
+    default_user_config: Dict[str, Any], dummy_form_inputs: Dict[str, Any]
 ) -> None:
     """Check that keys from config.json are present in form input testing fixture."""
     # get types from questions section of config.json
-    question_types = [q["type"] for q in default_site_config["questions"]]
+    question_types = [q["type"] for q in default_user_config["questions"]]
 
     # check config question types missing form inputs (if any)
     missing_keys = set(question_types) - set(dummy_form_inputs)
@@ -293,6 +293,15 @@ def test_session_config_form_backend_updated(
 def test_all_inputs_config_schema(all_inputs_config: Dict[str, Any]) -> None:
     """Check that the config.json schema for all inputs config is correct."""
     assert check_config_schema(all_inputs_config), "Error in all inputs config fixture."
+
+
+@pytest.mark.fixture
+def test_all_default_configs_upload_files(all_default_configs: Dict[str, Any]) -> None:
+    """Check that all the default configs upload files."""
+    # check config for file upload attr
+    assert not all_default_configs[
+        "ignore_file_upload"
+    ], "Default site configs should not ignore file uploads."
 
 
 @pytest.mark.fixture

@@ -46,6 +46,7 @@ def base_custom_config() -> Dict[str, Any]:
         "subject": "Testing",
         "title": "Testing",
         "form_backend_url": f"http://localhost:{port}{submit}",
+        "ignore_file_upload": False,
         "email": "foo@bar.com",
         "questions": [],
     }
@@ -74,6 +75,15 @@ def create_temp_websrc_dir(src: Path, dst: Path, src_files: Tuple[str, ...]) -> 
     return sub_dir
 
 
+def get_project_directory() -> Path:
+    """Get project directory path object."""
+    # Get the path of the current file (test_file.py)
+    current_file_path = Path(os.path.abspath(__file__))
+
+    # get grand parent dir
+    return current_file_path.parents[1]
+
+
 def load_config_file(directory: Path) -> Dict[str, Any]:
     """Load the JSON config file at directory."""
     # open the config file in the project dir
@@ -89,7 +99,7 @@ def write_config_file(config: Dict[str, Any], src_path: Path) -> None:
         json.dump(config, json_file, indent=2)
 
 
-def prepare_default_config(config: Dict[str, Any], src_path: Path) -> None:
+def prepare_default_config(config: Dict[str, Any]) -> Dict[str, Any]:
     """Update the default config copy with values approprate for testing."""
     # get port and submit route
     port, submit = get_server_info()
@@ -113,8 +123,8 @@ def prepare_default_config(config: Dict[str, Any], src_path: Path) -> None:
                 # add custom section with accept attr
                 question["custom"] = {"accept": "*"}
 
-    # write out updated file
-    write_config_file(config, src_path)
+    # get updated config data
+    return config
 
 
 @pytest.fixture(scope="session")
@@ -233,14 +243,10 @@ def sb_test_url() -> str:
     return "https://seleniumbase.io/realworld/login"
 
 
-@pytest.fixture(scope="session")
-def project_directory() -> Path:
+@pytest.fixture(scope="function")
+def project_dir() -> Path:
     """Get the path of the project directory."""
-    # Get the path of the current file (test_file.py)
-    current_file_path = Path(os.path.abspath(__file__))
-
-    # get grand parent dir
-    return current_file_path.parents[1]
+    return get_project_directory()
 
 
 @pytest.fixture(scope="session")
@@ -252,11 +258,23 @@ def website_files() -> Tuple[str, ...]:
 
 @pytest.fixture(scope="session")
 def session_websrc_tmp_dir(
-    project_directory: Path, session_tmp_dir: Path, website_files: Tuple[str, ...]
+    session_tmp_dir: Path, website_files: Tuple[str, ...]
 ) -> Generator[Path, None, None]:
     """Create a per-session copy of the website source code for editing."""
+    # project dir
+    project_dir = get_project_directory()
+
     # create a temporary directory
-    temp_dir = create_temp_websrc_dir(project_directory, session_tmp_dir, website_files)
+    temp_dir = create_temp_websrc_dir(project_dir, session_tmp_dir, website_files)
+
+    # get the default config
+    default_config = load_config_file(temp_dir)
+
+    # now update config.json with new backend url
+    updated_config = prepare_default_config(default_config)
+
+    # write to websrc temp copy
+    write_config_file(updated_config, temp_dir)
 
     # provide the temporary directory path to the test function
     yield temp_dir
@@ -265,20 +283,21 @@ def session_websrc_tmp_dir(
     shutil.rmtree(temp_dir)
 
 
-@pytest.fixture(scope="session")
-def default_site_config(project_directory: Path) -> Dict[str, Any]:
+@pytest.fixture(scope="function")
+def default_user_config(project_dir: Path) -> Dict[str, Any]:
     """Load the default config.json file."""
-    return load_config_file(project_directory)
+    return load_config_file(project_dir)
+
+
+@pytest.fixture(scope="function")
+def updated_user_config(default_user_config: Dict[str, Any]) -> Dict[str, Any]:
+    """Updates the user config file with appropriate testing attributes."""
+    return prepare_default_config(default_user_config)
 
 
 @pytest.fixture(scope="session")
-def session_web_app(
-    default_site_config: Dict[str, Any], session_websrc_tmp_dir: Path
-) -> Flask:
+def session_web_app(session_websrc_tmp_dir: Path) -> Flask:
     """Create a session-scoped Flask app for testing with the website source."""
-    # now update config.json with new backend url
-    prepare_default_config(default_site_config, session_websrc_tmp_dir)
-
     # create app
     return build_flask_app(session_websrc_tmp_dir)
 
@@ -318,6 +337,12 @@ def all_inputs_config(dummy_form_inputs: Dict[str, Any]) -> Dict[str, Any]:
         if input_type == "selectbox":
             # setup options
             options = [
+                {
+                    "label": "--Select option--",
+                    "value": "",
+                    "selected": True,
+                    "disabled": True,
+                },
                 {"label": "Option1", "value": "Opt1"},
                 {"label": "Option2", "value": "Opt2"},
                 {"label": "Option3", "value": "Opt3"},
@@ -334,6 +359,31 @@ def all_inputs_config(dummy_form_inputs: Dict[str, Any]) -> Dict[str, Any]:
     config["questions"] = questions
 
     # done
+    return config
+
+
+@pytest.fixture(
+    scope="function",
+    params=[
+        pytest.param("user"),
+        pytest.param("all_inputs"),
+    ],
+)
+def all_default_configs(
+    request, updated_user_config: Dict[str, Any], all_inputs_config: Dict[str, Any]
+) -> Dict[str, Any]:
+    """Parameterized default configs fixture."""
+    # get current markers and config type
+    config_type = request.param
+
+    # match config to use
+    match config_type:
+        case "user":
+            config = updated_user_config
+        case "all_inputs":
+            config = all_inputs_config
+
+    # get appropriate config
     return config
 
 

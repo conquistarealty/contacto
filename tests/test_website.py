@@ -1,6 +1,5 @@
 """Test all features of website."""
 
-import json
 from datetime import datetime
 from difflib import SequenceMatcher
 from pathlib import Path
@@ -14,7 +13,6 @@ from typing import Tuple
 import pytest
 import requests
 from bs4 import BeautifulSoup
-from flask import Flask
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from seleniumbase import BaseCase
@@ -236,16 +234,33 @@ def extract_received_form_input(
 
 
 @pytest.mark.website
-def test_config_schema(default_site_config: Dict[str, Any]) -> None:
+def test_config_schema(all_default_configs: Dict[str, Any]) -> None:
     """Check that the given config.json schema is correct."""
-    assert check_config_schema(default_site_config), "Check config.json file."
+    assert check_config_schema(all_default_configs), "Check config.json file."
 
 
 @pytest.mark.website
-def test_normal_display(sb: BaseCase, live_session_web_app_url: str) -> None:
+def test_normal_display(
+    sb: BaseCase, live_session_web_app_url: str, all_default_configs: Dict[str, Any]
+) -> None:
     """Simply tests that the website is displaying normally."""
-    # open with browser
-    sb.open(live_session_web_app_url)
+    # update config
+    response = requests.post(
+        live_session_web_app_url + "/update_config", json=all_default_configs
+    )
+
+    # check response
+    assert response.status_code == 200
+
+    # get token
+    token = response.json().get("token")
+    assert token is not None
+
+    # update site URL
+    site_url = f"{live_session_web_app_url}?token={token}"
+
+    # open site
+    sb.open(site_url)
 
     # verify that the container element is visible
     sb.assert_element_visible(".container")
@@ -262,38 +277,63 @@ def test_normal_display(sb: BaseCase, live_session_web_app_url: str) -> None:
 
 @pytest.mark.website
 def test_email_in_instructions(
-    sb: BaseCase, live_session_web_app_url: str, default_site_config: Dict[str, Any]
+    sb: BaseCase, live_session_web_app_url: str, all_default_configs: Dict[str, Any]
 ) -> None:
     """Test that email is dynamically added to instructions."""
-    # temp website src
-    sb.open(live_session_web_app_url)
-
     # get instructions if present
-    instructions = default_site_config.get("instructions", False)
+    instructions = all_default_configs.get("instructions", False)
 
     # check for email placeholder class in config
     if instructions and "email-placeholder" in instructions:
+        # update config
+        response = requests.post(
+            live_session_web_app_url + "/update_config", json=all_default_configs
+        )
+
+        # check response
+        assert response.status_code == 200
+
+        # get token
+        token = response.json().get("token")
+        assert token is not None
+
+        # update site URL
+        site_url = f"{live_session_web_app_url}?token={token}"
+
+        # open site
+        sb.open(site_url)
+
         # get instructions text
         instruct_text = sb.get_text("#instructions")
 
         # check email in text
-        assert default_site_config["email"] in instruct_text
+        assert all_default_configs["email"] in instruct_text
 
 
 @pytest.mark.website
 def test_file_uploads_enabled(
     sb: BaseCase,
     live_session_web_app_url: str,
-    default_site_config: Dict[str, Any],
+    all_default_configs: Dict[str, Any],
 ) -> None:
     """Test that the file uploads are enabled on the website."""
-    # check config for file upload attr
-    assert not default_site_config[
-        "ignore_file_upload"
-    ], "Default site config should not ignore file uploads."
+    # update config
+    response = requests.post(
+        live_session_web_app_url + "/update_config", json=all_default_configs
+    )
 
-    # open initial site
-    sb.open(live_session_web_app_url)
+    # check response
+    assert response.status_code == 200
+
+    # get token
+    token = response.json().get("token")
+    assert token is not None
+
+    # update site URL
+    site_url = f"{live_session_web_app_url}?token={token}"
+
+    # open site
+    sb.open(site_url)
 
     # check for any input file types
     file_inputs = sb.find_elements("input[type='file']")
@@ -312,24 +352,56 @@ def test_file_uploads_enabled(
 
 @pytest.mark.website
 def test_custom_title_works(
-    sb: BaseCase, live_session_web_app_url: str, default_site_config: Dict[str, Any]
+    sb: BaseCase, live_session_web_app_url: str, all_default_configs: Dict[str, Any]
 ) -> None:
     """Test that title is dynamically updated from config.json."""
-    # temp website src
-    sb.open(live_session_web_app_url)
+    # update config
+    response = requests.post(
+        live_session_web_app_url + "/update_config", json=all_default_configs
+    )
+
+    # check response
+    assert response.status_code == 200
+
+    # get token
+    token = response.json().get("token")
+    assert token is not None
+
+    # update site URL
+    site_url = f"{live_session_web_app_url}?token={token}"
+
+    # open site
+    sb.open(site_url)
 
     # get the title of the webpage
     title = sb.get_title()
 
     # check email in text
-    assert default_site_config["title"] == title
+    assert all_default_configs["title"] == title
 
 
 @pytest.mark.website
-def test_form_backend_updated(sb: BaseCase, live_session_web_app_url: str) -> None:
+def test_form_backend_updated(
+    sb: BaseCase, live_session_web_app_url: str, all_default_configs: Dict[str, Any]
+) -> None:
     """Check that the form backend url has been updated correctly."""
-    # open the webpage
-    sb.open(live_session_web_app_url)
+    # update config
+    response = requests.post(
+        live_session_web_app_url + "/update_config", json=all_default_configs
+    )
+
+    # check response
+    assert response.status_code == 200
+
+    # get token
+    token = response.json().get("token")
+    assert token is not None
+
+    # update site URL
+    site_url = f"{live_session_web_app_url}?token={token}"
+
+    # open site
+    sb.open(site_url)
 
     # find the form element
     form_element = sb.get_element("form")
@@ -352,25 +424,34 @@ def test_form_submission(
     sb: BaseCase,
     live_session_web_app_url: str,
     dummy_form_inputs: Dict[str, Any],
-    session_web_app: Flask,
+    all_default_configs: Dict[str, Any],
 ) -> None:
     """Check that the given form upon completion can be succesfully submitted."""
-    # get config file
-    client = session_web_app.test_client()
-    response = client.get("/config.json")
+    # update config
+    response = requests.post(
+        live_session_web_app_url + "/update_config", json=all_default_configs
+    )
 
-    # convert the response content to JSON
-    config = json.loads(response.data)
+    # check response
+    assert response.status_code == 200
 
-    # open the webpage
-    sb.open(live_session_web_app_url)
+    # get token
+    token = response.json().get("token")
+    assert token is not None
+
+    # update site URL
+    site_url = f"{live_session_web_app_url}?token={token}"
+
+    # open site
+    sb.open(site_url)
 
     # find the form element
     form_element = sb.get_element("form")
 
     # fill out form
     submitted_input = {
-        k: v for k, v in fill_out_form(form_element, config, dummy_form_inputs)
+        k: v
+        for k, v in fill_out_form(form_element, all_default_configs, dummy_form_inputs)
     }
 
     # save screeshot for comfirmation of form entries
@@ -412,18 +493,28 @@ def test_form_submission(
 
 @pytest.mark.website
 def test_form_submission_required_constraint(
-    sb: BaseCase, live_session_web_app_url: str, session_web_app: Flask
+    sb: BaseCase,
+    live_session_web_app_url: str,
+    all_default_configs: Dict[str, Any],
 ) -> None:
     """Check form denies submission if a required question is unanswered."""
-    # get config file
-    client = session_web_app.test_client()
-    response = client.get("/config.json")
+    # update config
+    response = requests.post(
+        live_session_web_app_url + "/update_config", json=all_default_configs
+    )
 
-    # convert the response content to JSON
-    config = json.loads(response.data)
+    # check response
+    assert response.status_code == 200
 
-    # open the webpage
-    sb.open(live_session_web_app_url)
+    # get token
+    token = response.json().get("token")
+    assert token is not None
+
+    # update site URL
+    site_url = f"{live_session_web_app_url}?token={token}"
+
+    # open site
+    sb.open(site_url)
 
     # find the form element
     form_element = sb.get_element("form")
@@ -435,7 +526,9 @@ def test_form_submission_required_constraint(
     page_source = {"before": sb.get_page_source()}
 
     # check for required questions
-    required_questions_present = any_required_questions(config["questions"])
+    required_questions_present = any_required_questions(
+        all_default_configs["questions"]
+    )
 
     # ... now click it
     send_button.click()
@@ -458,30 +551,48 @@ def test_form_submission_required_constraint(
 def test_form_download(
     sb: BaseCase,
     live_session_web_app_url: str,
-    session_web_app: Flask,
     dummy_form_inputs: Dict[str, Any],
+    all_default_configs: Dict[str, Any],
 ) -> None:
     """Check that the given form upon completion can be succesfully downloaded."""
-    # get config file
-    client = session_web_app.test_client()
-    response = client.get("/config.json")
+    # update config
+    response = requests.post(
+        live_session_web_app_url + "/update_config", json=all_default_configs
+    )
 
-    # convert the response content to JSON
-    config = json.loads(response.data)
+    # check response
+    assert response.status_code == 200
 
-    # open the webpage
-    sb.open(live_session_web_app_url)
+    # get token
+    token = response.json().get("token")
+    assert token is not None
+
+    # update site URL
+    site_url = f"{live_session_web_app_url}?token={token}"
+
+    # open site
+    sb.open(site_url)
 
     # find the form element
     form_element = sb.get_element("form")
 
     # fill out form
     submitted_input = {
-        k: v for k, v in fill_out_form(form_element, config, dummy_form_inputs)
+        k: v
+        for k, v in fill_out_form(form_element, all_default_configs, dummy_form_inputs)
     }
 
     # save screeshot for comfirmation of form entries
     sb.save_screenshot_to_logs()
+
+    # check download dir
+    download_dir = sb.get_downloads_folder()
+
+    # download file name
+    dwnld_file = "contact_form_response.html"
+
+    # delete any previousl created downloads
+    sb.delete_downloaded_file_if_present(f"{download_dir}/{dwnld_file}")
 
     # get download button ...
     download_button = form_element.find_element(By.ID, "download_button")
@@ -490,13 +601,13 @@ def test_form_download(
     download_button.click()
 
     # ... and make sure file is present in downloads dir
-    sb.assert_downloaded_file("contact_form_response.html")
+    sb.assert_downloaded_file(dwnld_file)
 
     # now get path to downloaded form response
-    download_path = sb.get_path_of_downloaded_file("contact_form_response.html")
+    download_path = sb.get_path_of_downloaded_file(dwnld_file)
 
     # read HTML download file into string
-    download_html = read_html_file(sb.get_path_of_downloaded_file(download_path))
+    download_html = read_html_file(download_path)
 
     # get received input from Flask response html
     received_input = {k: v for k, v in extract_received_form_input(download_html)}
@@ -528,59 +639,14 @@ def test_form_download(
 
 @pytest.mark.website
 def test_form_download_required_constraint(
-    sb: BaseCase, live_session_web_app_url: str, session_web_app: Flask
-) -> None:
-    """Check form denies download if a required question is unanswered."""
-    # get config file
-    client = session_web_app.test_client()
-    response = client.get("/config.json")
-
-    # convert the response content to JSON
-    config = json.loads(response.data)
-
-    # open the webpage
-    sb.open(live_session_web_app_url)
-
-    # find the form element
-    form_element = sb.get_element("form")
-
-    # get send button ...
-    download_button = form_element.find_element(By.ID, "download_button")
-
-    # store page source before
-    page_source = {"before": sb.get_page_source()}
-
-    # check for required questions
-    required_questions_present = any_required_questions(config["questions"])
-
-    # ... now click it
-    download_button.click()
-
-    # check alert message
-    if required_questions_present:
-        sb.wait_for_and_accept_alert()
-
-    # now store it after
-    page_source["after"] = sb.get_page_source()
-
-    # should see red outlined required questions
-    assert all(check_required_inputs_border_red(page_source["after"]))
-
-    # save screenshot for confirmation
-    sb.save_screenshot_to_logs()
-
-
-@pytest.mark.feature
-def test_all_supported_inputs(
     sb: BaseCase,
     live_session_web_app_url: str,
-    all_inputs_config: Dict[str, Any],
-    dummy_form_inputs: Dict[str, Any],
+    all_default_configs: Dict[str, Any],
 ) -> None:
-    """Testing all supported inputs pass correctly."""
+    """Check form denies download if a required question is unanswered."""
     # update config
     response = requests.post(
-        live_session_web_app_url + "/update_config", json=all_inputs_config
+        live_session_web_app_url + "/update_config", json=all_default_configs
     )
 
     # check response
@@ -599,46 +665,31 @@ def test_all_supported_inputs(
     # find the form element
     form_element = sb.get_element("form")
 
-    # fill out form
-    submitted_input = {
-        k: v
-        for k, v in fill_out_form(form_element, all_inputs_config, dummy_form_inputs)
-    }
-
-    # save screeshot for comfirmation of form entries
-    sb.save_screenshot_to_logs()
-
     # get send button ...
-    send_button = form_element.find_element(By.ID, "send_button")
+    download_button = form_element.find_element(By.ID, "download_button")
+
+    # store page source before
+    page_source = {"before": sb.get_page_source()}
+
+    # check for required questions
+    required_questions_present = any_required_questions(
+        all_default_configs["questions"]
+    )
 
     # ... now click it
-    send_button.click()
+    download_button.click()
 
-    # check that the form was submitted
-    sb.assert_text("Contact Form Response")
+    # check alert message
+    if required_questions_present:
+        sb.wait_for_and_accept_alert()
 
-    # get the HTML content of the response
-    response_html = sb.get_page_source()
+    # now store it after
+    page_source["after"] = sb.get_page_source()
 
-    # get received input from Flask response html
-    received_input = {k: v for k, v in extract_received_form_input(response_html)}
+    # should see red outlined required questions
+    assert all(check_required_inputs_border_red(page_source["after"]))
 
-    # check keys are same
-    missing_keys = set(submitted_input) - set(received_input)
-    assert not missing_keys, f"Keys are not the same: {missing_keys}"
-
-    # now check values
-    for key in submitted_input.keys():
-        # get values
-        value1 = submitted_input[key]
-        value2 = received_input[key]
-
-        # check
-        assert (
-            value1 == value2
-        ), f"Submitted input: {value1} differs from received: {value2}"
-
-    # save screenshot for confirmation of response
+    # save screenshot for confirmation
     sb.save_screenshot_to_logs()
 
 
