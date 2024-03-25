@@ -292,7 +292,7 @@ def test_session_config_form_backend_updated(
 @pytest.mark.fixture
 def test_all_inputs_config_schema(all_inputs_config: Dict[str, Any]) -> None:
     """Check that the config.json schema for all inputs config is correct."""
-    assert check_config_schema(all_inputs_config), "Error in all inputs config fixture."
+    assert check_config_schema(all_inputs_config)
 
 
 @pytest.mark.fixture
@@ -309,9 +309,7 @@ def test_multi_options_config_schema(
     multiple_select_options_config: Dict[str, Any]
 ) -> None:
     """Check that the given config.json schema for multi select options is correct."""
-    assert check_config_schema(
-        multiple_select_options_config
-    ), "Error in multi options config fixture."
+    assert check_config_schema(multiple_select_options_config)
 
 
 @pytest.mark.fixture
@@ -362,9 +360,7 @@ def test_multi_opts_config_defaults(
 @pytest.mark.fixture
 def test_ignore_upload_config_schema(ignore_upload_config: Dict[str, Any]) -> None:
     """Check that the given config.json schema for ignore uploads is correct."""
-    assert check_config_schema(
-        ignore_upload_config
-    ), "Error in ignore file upload config fixture."
+    assert check_config_schema(ignore_upload_config)
 
 
 @pytest.mark.fixture
@@ -398,9 +394,7 @@ def test_ignore_upload_custom_attrs(ignore_upload_config: Dict[str, Any]) -> Non
 @pytest.mark.fixture
 def test_instructions_config_schema(instructions_config: Dict[str, Any]) -> None:
     """Check that the given config.json schema for iinstructions is correct."""
-    assert check_config_schema(
-        instructions_config
-    ), "Error in instructions config fixture."
+    assert check_config_schema(instructions_config)
 
 
 @pytest.mark.fixture
