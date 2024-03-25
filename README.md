@@ -110,7 +110,7 @@ explained below in more detail (**NOTE**: attributes with a __*__ mark are
 + `enable_form_download`: Allow form to be downloaded (**optional**).
 + `form_backend_url`: The (**optional**) form backend URL for submitting forms to.
 + `ignore_file_upload`: When true files will not be uploaded (**optional**).
-+ `email`(__*__): The email address used by the **mailto** attribute and used in the
++ `email`: The (**optional**) email used by the **mailto** attribute and used in the
   *instructions* above the form.
 + `questions`(__*__): The questions used to dynamically populate the form.
   + `label`(__*__): The actual *question* text placed above the form input field.

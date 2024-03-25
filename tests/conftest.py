@@ -527,3 +527,26 @@ def disabled_form_download_config() -> Dict[str, Any]:
 
     # updated
     return config
+
+
+@pytest.fixture(scope="function")
+def missing_email_config() -> Dict[str, Any]:
+    """Custom config file fixture for missing email."""
+    # get base config
+    config = base_custom_config()
+
+    # remove email attr
+    del config["email"]
+
+    # update questions
+    config["questions"] = [
+        {
+            "label": "Question 1",
+            "name": "q1",
+            "type": "text",
+            "required": True,
+        }
+    ]
+
+    # updated
+    return config

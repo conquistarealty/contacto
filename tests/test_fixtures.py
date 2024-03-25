@@ -469,3 +469,9 @@ def test_disabled_downloads_config_schema(
 def test_downloads_disabled(disabled_form_download_config: Dict[str, Any]) -> None:
     """Check that the necessary attribute is false."""
     assert not disabled_form_download_config["enable_form_download"]
+
+
+@pytest.mark.fixture
+def test_missing_email_config_schema(missing_email_config: Dict[str, Any]) -> None:
+    """Check that the given config.json schema for no email is correct."""
+    assert check_config_schema(missing_email_config)

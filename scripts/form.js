@@ -232,9 +232,9 @@ fetch('config.json')
     return response.json();
 })
 .then(data => {
-    // Alert user if email key not found
-    if (!data.email) {
-        throw new Error('Email address not found in config.json');
+    // Alert user if email or form_backend_url key not found
+    if (!data.email && !data.form_backend_url) {
+        throw new Error('Email address or form backend URL not found in config.json');
     }
 
     // Alert user if title not found
@@ -253,9 +253,10 @@ fetch('config.json')
     const form = document.getElementById('contact-form');
     const email = data.email;
     const subject = encodeURIComponent(data.subject); // Encrypt subject
-    form.setAttribute('action', 'mailto:' + email + '?subject=' + subject);
-
-    // Set form backend URL if available and not null
+    if (email !== undefined && email !== null) {
+      form.setAttribute('action', 'mailto:' + email + '?subject=' + subject);
+    }
+    
     const formBackendUrl = data.form_backend_url;
     if (formBackendUrl !== undefined && formBackendUrl !== null) {
       // Set form backend URL and enctype if available and not null
@@ -284,10 +285,10 @@ fetch('config.json')
         } else {
             instructionsElement.innerHTML = data.instructions;
         }
-    }
 
-    // Update email placeholder in instructions
-    updateEmailPlaceholders(email);
+        // Update email placeholder in instructions
+        updateEmailPlaceholders(email);
+    }
 
     // Add click event listener to copy email to clipboard
     const emailPlaceholders = document.querySelectorAll('.email-placeholder');

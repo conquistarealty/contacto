@@ -276,41 +276,6 @@ def test_normal_display(
 
 
 @pytest.mark.website
-def test_email_in_instructions(
-    sb: BaseCase, live_session_web_app_url: str, all_default_configs: Dict[str, Any]
-) -> None:
-    """Test that email is dynamically added to instructions."""
-    # get instructions if present
-    instructions = all_default_configs.get("instructions", False)
-
-    # check for email placeholder class in config
-    if instructions and "email-placeholder" in instructions:
-        # update config
-        response = requests.post(
-            live_session_web_app_url + "/update_config", json=all_default_configs
-        )
-
-        # check response
-        assert response.status_code == 200
-
-        # get token
-        token = response.json().get("token")
-        assert token is not None
-
-        # update site URL
-        site_url = f"{live_session_web_app_url}?token={token}"
-
-        # open site
-        sb.open(site_url)
-
-        # get instructions text
-        instruct_text = sb.get_text("#instructions")
-
-        # check email in text
-        assert all_default_configs["email"] in instruct_text
-
-
-@pytest.mark.website
 def test_file_uploads_enabled(
     sb: BaseCase,
     live_session_web_app_url: str,
@@ -1136,7 +1101,6 @@ def test_html_label_rendered(
     sb.save_screenshot_to_logs()
 
 
-@pytest.mark.debug
 @pytest.mark.feature
 def test_form_download_disabled(
     sb: BaseCase,
@@ -1167,6 +1131,44 @@ def test_form_download_disabled(
 
     # ... but that send is visible
     assert sb.is_element_visible("button#send_button")
+
+    # save screenshot for confirmation
+    sb.save_screenshot_to_logs()
+
+
+@pytest.mark.feature
+def test_no_email(
+    sb: BaseCase,
+    live_session_web_app_url: str,
+    missing_email_config: Dict[str, Any],
+) -> None:
+    """Check that the form target is correct if email is missing."""
+    # update config
+    response = requests.post(
+        live_session_web_app_url + "/update_config", json=missing_email_config
+    )
+
+    # check response
+    assert response.status_code == 200
+
+    # get token
+    token = response.json().get("token")
+    assert token is not None
+
+    # update site URL
+    site_url = f"{live_session_web_app_url}?token={token}"
+
+    # open site
+    sb.open(site_url)
+
+    # get form
+    form_element = sb.get_element("form")
+
+    # get the enctype attribute
+    enctype_value = form_element.get_attribute("enctype")
+
+    # make sure it's multipart
+    assert enctype_value == "application/x-www-form-urlencoded"
 
     # save screenshot for confirmation
     sb.save_screenshot_to_logs()

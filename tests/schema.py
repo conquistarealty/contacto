@@ -93,10 +93,10 @@ class Question(Schema):
 class Config(Schema):
     """Defines the schema for config.json."""
 
-    email: str
     title: str
     subject: str
     questions: list
+    email: Optional[str] = None
     enable_form_download: Optional[bool] = None
     form_backend_url: Optional[str] = None
     ignore_file_upload: Optional[bool] = None
@@ -125,6 +125,11 @@ class Config(Schema):
 
             # now join all strings and update instructions
             self.instructions = " ".join(valid_instructions)
+
+        # check at least one target is NOT none
+        targets_set = (bool(var) for var in (self.email, self.form_backend_url))
+        if not any(targets_set):
+            raise ValueError("Both email and form_backend_url cannot be None.")
 
 
 def check_config_schema(config: dict) -> bool:

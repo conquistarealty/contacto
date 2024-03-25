@@ -262,6 +262,21 @@ def config_test_data() -> Generator[Tuple[Dict[str, Any], bool], None, None]:
         ],
     }, False
 
+    # invalid config: one target (either email or form backend) must be set
+    yield {
+        "title": "Title",
+        "subject": "Subject",
+        "questions": [
+            {
+                "label": "Question 6",
+                "name": "question6",
+                "type": "text",
+                "required": True,
+                "custom": {"placeholder": "Enter your answer here"},
+            }
+        ],
+    }, False
+
 
 @pytest.mark.schema
 @pytest.mark.parametrize("config_data, expected_result", config_test_data())
