@@ -142,12 +142,9 @@ def create_main_blueprint(
         token = request.args.get("token")
 
         # check if token exists
-        if token:
-            # get config data
-            config_data = config_data_map.get(token)
-
-            # update session data
-            session["config_data"] = config_data
+        if token and (config_data := config_data_map.get(token)):
+            # update session token
+            session["config_data_token"] = token
 
             # notify
             print(f"Received token: {token}")
@@ -158,7 +155,8 @@ def create_main_blueprint(
     @main_bp.route("/<path:path>")
     def other_root_files(path):
         """Serve any other files (e.g. config.json) from the project dir."""
-        if "config.json" in path and (config_data := session.get("config_data")):
+        if "config.json" in path and (token := session.get("config_data_token")):
+            config_data = config_data_map[token]
             print(f"Serving updated config.json data: {config_data}")
             return jsonify(config_data)
         else:
@@ -195,7 +193,7 @@ def create_config_blueprint(config_data_map: Dict[str, Any]) -> Blueprint:
         if request.is_json:
             config_data = request.json
             token = secrets.token_urlsafe(16)
-            session["config_data"] = config_data
+            session["config_data_token"] = token
             config_data_map[token] = config_data
             print(f"Updating config data: {config_data}")
             return jsonify({"token": token}), 200
@@ -204,8 +202,8 @@ def create_config_blueprint(config_data_map: Dict[str, Any]) -> Blueprint:
 
     @config_bp.route("/reset_config")
     def reset_config():
-        """Clears the session cache of any config data."""
-        session.pop("config_data", None)
+        """Clears the session cache of any config data token."""
+        session.pop("config_data_token", None)
         return "Configuration reset successfully!\n", 200
 
     return config_bp
