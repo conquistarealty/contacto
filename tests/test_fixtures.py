@@ -455,3 +455,17 @@ def test_html_label_present(multiline_question_label_config: Dict[str, Any]) -> 
     # confirm HTML
     soup = BeautifulSoup(label_text, "html.parser")
     assert len(soup.find_all()) > 0
+
+
+@pytest.mark.fixture
+def test_disabled_downloads_config_schema(
+    disabled_form_download_config: Dict[str, Any]
+) -> None:
+    """Check that the given config.json schema for disabled form downloads is good."""
+    assert check_config_schema(disabled_form_download_config)
+
+
+@pytest.mark.fixture
+def test_downloads_disabled(disabled_form_download_config: Dict[str, Any]) -> None:
+    """Check that the necessary attribute is false."""
+    assert not disabled_form_download_config["enable_form_download"]

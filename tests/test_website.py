@@ -555,86 +555,90 @@ def test_form_download(
     all_default_configs: Dict[str, Any],
 ) -> None:
     """Check that the given form upon completion can be succesfully downloaded."""
-    # update config
-    response = requests.post(
-        live_session_web_app_url + "/update_config", json=all_default_configs
-    )
+    # make sure form downloads are enabled
+    if all_default_configs.get("enable_form_download", False):
+        # update config
+        response = requests.post(
+            live_session_web_app_url + "/update_config", json=all_default_configs
+        )
 
-    # check response
-    assert response.status_code == 200
+        # check response
+        assert response.status_code == 200
 
-    # get token
-    token = response.json().get("token")
-    assert token is not None
+        # get token
+        token = response.json().get("token")
+        assert token is not None
 
-    # update site URL
-    site_url = f"{live_session_web_app_url}?token={token}"
+        # update site URL
+        site_url = f"{live_session_web_app_url}?token={token}"
 
-    # open site
-    sb.open(site_url)
+        # open site
+        sb.open(site_url)
 
-    # find the form element
-    form_element = sb.get_element("form")
+        # find the form element
+        form_element = sb.get_element("form")
 
-    # fill out form
-    submitted_input = {
-        k: v
-        for k, v in fill_out_form(form_element, all_default_configs, dummy_form_inputs)
-    }
+        # fill out form
+        submitted_input = {
+            k: v
+            for k, v in fill_out_form(
+                form_element, all_default_configs, dummy_form_inputs
+            )
+        }
 
-    # save screeshot for comfirmation of form entries
-    sb.save_screenshot_to_logs()
+        # save screeshot for comfirmation of form entries
+        sb.save_screenshot_to_logs()
 
-    # check download dir
-    download_dir = sb.get_downloads_folder()
+        # check download dir
+        download_dir = sb.get_downloads_folder()
 
-    # download file name
-    dwnld_file = "contact_form_response.html"
+        # download file name
+        dwnld_file = "contact_form_response.html"
 
-    # delete any previousl created downloads
-    sb.delete_downloaded_file_if_present(f"{download_dir}/{dwnld_file}")
+        # delete any previousl created downloads
+        sb.delete_downloaded_file_if_present(f"{download_dir}/{dwnld_file}")
 
-    # get download button ...
-    download_button = form_element.find_element(By.ID, "download_button")
+        # get download button ...
+        download_button = form_element.find_element(By.ID, "download_button")
 
-    # ... now click it ...
-    download_button.click()
+        # ... now click it ...
+        download_button.click()
 
-    # ... and make sure file is present in downloads dir
-    sb.assert_downloaded_file(dwnld_file)
+        # ... and make sure file is present in downloads dir
+        sb.assert_downloaded_file(dwnld_file)
 
-    # now get path to downloaded form response
-    download_path = sb.get_path_of_downloaded_file(dwnld_file)
+        # now get path to downloaded form response
+        download_path = sb.get_path_of_downloaded_file(dwnld_file)
 
-    # read HTML download file into string
-    download_html = read_html_file(download_path)
+        # read HTML download file into string
+        download_html = read_html_file(download_path)
 
-    # get received input from Flask response html
-    received_input = {k: v for k, v in extract_received_form_input(download_html)}
+        # get received input from Flask response html
+        received_input = {k: v for k, v in extract_received_form_input(download_html)}
 
-    # check keys are same
-    missing_keys = set(submitted_input) - set(received_input)
-    assert not missing_keys, f"Keys are not the same: {missing_keys}"
+        # check keys are same
+        missing_keys = set(submitted_input) - set(received_input)
+        assert not missing_keys, f"Keys are not the same: {missing_keys}"
 
-    # now check values
-    for key in submitted_input.keys():
-        # get values
-        value1 = submitted_input[key]
-        value2 = received_input[key]
+        # now check values
+        for key in submitted_input.keys():
+            # get values
+            value1 = submitted_input[key]
+            value2 = received_input[key]
 
-        # check
-        assert (
-            value1 == value2
-        ), f"Submitted input: {value1} differs from received: {value2}"
+            # check
+            assert (
+                value1 == value2
+            ), f"Submitted input: {value1} differs from received: {value2}"
 
-    # open downloaded file in seleniumbase
-    sb.open("file://" + download_path)
+        # open downloaded file in seleniumbase
+        sb.open("file://" + download_path)
 
-    # check download html file opened in browser
-    sb.assert_text("Contact Form Response")
+        # check download html file opened in browser
+        sb.assert_text("Contact Form Response")
 
-    # save screenshot for confirmation
-    sb.save_screenshot_to_logs()
+        # save screenshot for confirmation
+        sb.save_screenshot_to_logs()
 
 
 @pytest.mark.website
@@ -644,53 +648,55 @@ def test_form_download_required_constraint(
     all_default_configs: Dict[str, Any],
 ) -> None:
     """Check form denies download if a required question is unanswered."""
-    # update config
-    response = requests.post(
-        live_session_web_app_url + "/update_config", json=all_default_configs
-    )
+    # make sure form downloads are enabled
+    if all_default_configs.get("enable_form_download", False):
+        # update config
+        response = requests.post(
+            live_session_web_app_url + "/update_config", json=all_default_configs
+        )
 
-    # check response
-    assert response.status_code == 200
+        # check response
+        assert response.status_code == 200
 
-    # get token
-    token = response.json().get("token")
-    assert token is not None
+        # get token
+        token = response.json().get("token")
+        assert token is not None
 
-    # update site URL
-    site_url = f"{live_session_web_app_url}?token={token}"
+        # update site URL
+        site_url = f"{live_session_web_app_url}?token={token}"
 
-    # open site
-    sb.open(site_url)
+        # open site
+        sb.open(site_url)
 
-    # find the form element
-    form_element = sb.get_element("form")
+        # find the form element
+        form_element = sb.get_element("form")
 
-    # get send button ...
-    download_button = form_element.find_element(By.ID, "download_button")
+        # get send button ...
+        download_button = form_element.find_element(By.ID, "download_button")
 
-    # store page source before
-    page_source = {"before": sb.get_page_source()}
+        # store page source before
+        page_source = {"before": sb.get_page_source()}
 
-    # check for required questions
-    required_questions_present = any_required_questions(
-        all_default_configs["questions"]
-    )
+        # check for required questions
+        required_questions_present = any_required_questions(
+            all_default_configs["questions"]
+        )
 
-    # ... now click it
-    download_button.click()
+        # ... now click it
+        download_button.click()
 
-    # check alert message
-    if required_questions_present:
-        sb.wait_for_and_accept_alert()
+        # check alert message
+        if required_questions_present:
+            sb.wait_for_and_accept_alert()
 
-    # now store it after
-    page_source["after"] = sb.get_page_source()
+        # now store it after
+        page_source["after"] = sb.get_page_source()
 
-    # should see red outlined required questions
-    assert all(check_required_inputs_border_red(page_source["after"]))
+        # should see red outlined required questions
+        assert all(check_required_inputs_border_red(page_source["after"]))
 
-    # save screenshot for confirmation
-    sb.save_screenshot_to_logs()
+        # save screenshot for confirmation
+        sb.save_screenshot_to_logs()
 
 
 @pytest.mark.feature
@@ -1127,4 +1133,40 @@ def test_html_label_rendered(
     assert "mozilla" in postclick_url
 
     # get screenshot
+    sb.save_screenshot_to_logs()
+
+
+@pytest.mark.debug
+@pytest.mark.feature
+def test_form_download_disabled(
+    sb: BaseCase,
+    live_session_web_app_url: str,
+    disabled_form_download_config: Dict[str, Any],
+) -> None:
+    """Check that the download button is not visible when downloads disabled."""
+    # update config
+    response = requests.post(
+        live_session_web_app_url + "/update_config", json=disabled_form_download_config
+    )
+
+    # check response
+    assert response.status_code == 200
+
+    # get token
+    token = response.json().get("token")
+    assert token is not None
+
+    # update site URL
+    site_url = f"{live_session_web_app_url}?token={token}"
+
+    # open site
+    sb.open(site_url)
+
+    # make sure download is not visible ...
+    assert not sb.is_element_visible("button#download_button")
+
+    # ... but that send is visible
+    assert sb.is_element_visible("button#send_button")
+
+    # save screenshot for confirmation
     sb.save_screenshot_to_logs()

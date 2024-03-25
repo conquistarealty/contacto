@@ -437,84 +437,93 @@ fetch('config.json')
     download_html_button.textContent = 'Download Form';
     download_html_button.setAttribute('id', 'download_button'); // Add id attribute
 
-    // Add event to listen for click
-    download_html_button.addEventListener('click', () => {
+    // Check if data.enable_form_download is true
+    if (data.enable_form_download) {
+        // Add event to listen for click
+        download_html_button.addEventListener('click', () => {
 
-        // Get inputs to store
-        const formData = {};
-        const inputs = form.querySelectorAll('input, textarea, select');
-        let valid = true;
+            // Get inputs to store
+            const formData = {};
+            const inputs = form.querySelectorAll('input, textarea, select');
+            let valid = true;
 
-        // Log to console
-        console.log("Beginning download validation");
+            // Log to console
+            console.log("Beginning download validation");
 
-        inputs.forEach(input => {
-            let fieldValue = input.value;
+            inputs.forEach(input => {
+                let fieldValue = input.value;
 
-            if (input.tagName === 'SELECT' && input.hasAttribute('multiple')) {
-                const selectedOptions = Array.from(input.selectedOptions);
+                if (input.tagName === 'SELECT' && input.hasAttribute('multiple')) {
+                    const selectedOptions = Array.from(input.selectedOptions);
 
-                // Convert array to string
-                fieldValue = selectedOptions.map(option => option.value).join(', ');
-            }
+                    // Convert array to string
+                    fieldValue = selectedOptions.map(option => option.value).join(', ');
+                }
 
-            if (input.hasAttribute('required') && (!fieldValue || !fieldValue.trim())) {
-                valid = false;
-                input.style.borderColor = 'red'; // Highlight required fields in red
+                if (input.hasAttribute('required') && (!fieldValue || !fieldValue.trim())) {
+                    valid = false;
+                    input.style.borderColor = 'red'; // Highlight required fields in red
+                } else {
+                    input.style.borderColor = '#555'; // Reset border color
+                }
+
+                // Store form data
+                formData[input.getAttribute('name')] = fieldValue;
+            });
+
+            if (valid) {
+                // Log to console
+                console.log("Validation passed. Downloading form...");
+
+                // Initialize an array to store all promises
+                const promises = [];
+
+                // Handle file uploads sequentially
+                const fileInputs = form.querySelectorAll('input[type="file"]');
+                fileInputs.forEach(fileInput => {
+                  // Create a promise for each file upload operation
+                  const promise = new Promise((resolve) => {
+                      handleFileUpload({ target: fileInput }, formData, updatedFormData => {
+                          console.log("Callback formData updated:", updatedFormData);
+                          resolve();
+                      });
+                  });
+                  promises.push(promise);
+                });
+
+                // Wait for all promises to resolve
+                Promise.all(promises).then(() => {
+                  // Generate HTML content
+                  const htmlContent = generateHtmlContent(formData);
+
+                  // Create a Blob containing the HTML content
+                  const blob = new Blob([htmlContent], { type: 'text/html' });
+
+                  // Create a download link
+                  const link = document.createElement('a');
+                  link.href = URL.createObjectURL(blob);
+                  link.download = 'contact_form_response.html';
+
+                  // Append the link to the body and click it programmatically
+                  document.body.appendChild(link);
+                  link.click();
+
+                  // Remove the link from the body
+                  document.body.removeChild(link);
+                });
+
             } else {
-                input.style.borderColor = '#555'; // Reset border color
+                alert('Please fill out all required fields.');
             }
-
-            // Store form data
-            formData[input.getAttribute('name')] = fieldValue;
         });
 
-        if (valid) {
-            // Log to console
-            console.log("Validation passed. Downloading form...");
-
-            // Initialize an array to store all promises
-            const promises = [];
-
-            // Handle file uploads sequentially
-            const fileInputs = form.querySelectorAll('input[type="file"]');
-            fileInputs.forEach(fileInput => {
-              // Create a promise for each file upload operation
-              const promise = new Promise((resolve) => {
-                  handleFileUpload({ target: fileInput }, formData, updatedFormData => {
-                      console.log("Callback formData updated:", updatedFormData);
-                      resolve();
-                  });
-              });
-              promises.push(promise);
-            });
-
-            // Wait for all promises to resolve
-            Promise.all(promises).then(() => {
-              // Generate HTML content
-              const htmlContent = generateHtmlContent(formData);
-
-              // Create a Blob containing the HTML content
-              const blob = new Blob([htmlContent], { type: 'text/html' });
-
-              // Create a download link
-              const link = document.createElement('a');
-              link.href = URL.createObjectURL(blob);
-              link.download = 'contact_form_response.html';
-
-              // Append the link to the body and click it programmatically
-              document.body.appendChild(link);
-              link.click();
-
-              // Remove the link from the body
-              document.body.removeChild(link);
-            });
-
-        } else {
-            alert('Please fill out all required fields.');
-        }
-    });
-    form.appendChild(download_html_button);
+        // If true display the download button
+        form.appendChild(download_html_button);
+    }
+    else {
+        // If not hide the download button
+        download_html_button.style.display = 'none';
+    }
 
     // Show the instructions/form when JavaScript is enabled
     document.querySelector(".container").style.display = "block";

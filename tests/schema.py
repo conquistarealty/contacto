@@ -97,6 +97,7 @@ class Config(Schema):
     title: str
     subject: str
     questions: list
+    enable_form_download: Optional[bool] = None
     form_backend_url: Optional[str] = None
     ignore_file_upload: Optional[bool] = None
     instructions: Optional[list | str] = None

@@ -45,6 +45,7 @@ def base_custom_config() -> Dict[str, Any]:
     return {
         "subject": "Testing",
         "title": "Testing",
+        "enable_form_download": True,
         "form_backend_url": f"http://localhost:{port}{submit}",
         "ignore_file_upload": False,
         "email": "foo@bar.com",
@@ -496,6 +497,29 @@ def multiline_question_label_config() -> Dict[str, Any]:
                 "directly in your <i>question text</i>",
             ],
             "name": "multiline_html_question",
+            "type": "text",
+            "required": True,
+        }
+    ]
+
+    # updated
+    return config
+
+
+@pytest.fixture(scope="function")
+def disabled_form_download_config() -> Dict[str, Any]:
+    """Custom config file fixture disabled form downloads."""
+    # get base config
+    config = base_custom_config()
+
+    # update form downloads
+    config["enable_form_download"] = False
+
+    # update questions
+    config["questions"] = [
+        {
+            "label": "Question 1",
+            "name": "q1",
             "type": "text",
             "required": True,
         }

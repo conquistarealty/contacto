@@ -86,6 +86,7 @@ Below is a minimal *configuration* of the `Parley` software:
   "instructions": "Your custom form usage instructions",
   "subject": "Your Form Subject",
   "title": "Your Custom Title",
+  "enable_form_download": true,
   "form_backend_url": null,
   "ignore_file_upload": false,
   "email": "your_email@example.com",
@@ -106,6 +107,7 @@ explained below in more detail (**NOTE**: attributes with a __*__ mark are
 + `instructions`: The (**optional**) custom form usage instructions.
 + `subject`(__*__): The *email subject* that will be submitted by the form.
 + `title`(__*__): The text that will be set in the **title** element.
++ `enable_form_download`: Allow form to be downloaded (**optional**).
 + `form_backend_url`: The (**optional**) form backend URL for submitting forms to.
 + `ignore_file_upload`: When true files will not be uploaded (**optional**).
 + `email`(__*__): The email address used by the **mailto** attribute and used in the
