@@ -236,7 +236,7 @@ def extract_received_form_input(
 @pytest.mark.website
 def test_config_schema(all_default_configs: Dict[str, Any]) -> None:
     """Check that the given config.json schema is correct."""
-    assert check_config_schema(all_default_configs), "Check config.json file."
+    assert check_config_schema(all_default_configs)
 
 
 @pytest.mark.website

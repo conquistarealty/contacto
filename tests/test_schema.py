@@ -117,6 +117,21 @@ def question_test_data() -> Generator[Tuple[Dict[str, Any], bool], None, None]:
         "required": True,
     }, False
 
+    # invalid question: only string type allowed in multiline list string label
+    yield {
+        "label": [
+            "This is question 6",
+            3.1415926535897932384626433832795028841971,
+            "and it is a multiline string,",
+            "but it should only have strings",
+            "and no other type",
+        ],
+        "name": "question1",
+        "type": "text",
+        "required": True,
+        "custom": {"placeholder": "Enter your answer here"},
+    }, False
+
 
 @pytest.mark.schema
 @pytest.mark.parametrize("question_data, expected_result", question_test_data())
@@ -179,15 +194,15 @@ def config_test_data() -> Generator[Tuple[Dict[str, Any], bool], None, None]:
         "subject": "Subject",
         "questions": [
             {
-                "label": "Question 1",
-                "name": "question1",
+                "label": "Question 2",
+                "name": "question2",
                 "type": "text",
                 "required": True,
                 "custom": {"placeholder": "Enter your answer here"},
             },
             {
-                "label": "Question 2",
-                "name": "question2",
+                "label": "Question 3",
+                "name": "question3",
                 "type": "selectbox",
                 "required": True,
                 "options": [{"label": "Option 1", "value": "option1"}],
@@ -211,8 +226,8 @@ def config_test_data() -> Generator[Tuple[Dict[str, Any], bool], None, None]:
         "form_backend_url": 2.718281828459045235360287471352662497757,  # needs string
         "questions": [
             {
-                "label": "Question 3",
-                "name": "question3",
+                "label": "Question 4",
+                "name": "question4",
                 "type": "text",
                 "required": True,
                 "custom": {"placeholder": "Enter your answer here"},
@@ -220,12 +235,31 @@ def config_test_data() -> Generator[Tuple[Dict[str, Any], bool], None, None]:
         ],
     }, False
 
+    # invalid config: wrong type for questions
     yield {
         "email": "example@example.com",
         "title": "Title",
         "subject": "Subject",
         "form_backend_url": "http://example.com/form",
         "questions": "invalid",  # string instead of list
+    }, False
+
+    # invalid config: number cannot be in multiline instructions
+    yield {
+        "instructions": ["All work", 2, "and no play", "make jack", "a dull", "boy"],
+        "email": "example@example.com",
+        "title": "Title",
+        "subject": "Subject",
+        "form_backend_url": "http://example.com/form",
+        "questions": [
+            {
+                "label": "Question 5",
+                "name": "question5",
+                "type": "text",
+                "required": True,
+                "custom": {"placeholder": "Enter your answer here"},
+            }
+        ],
     }, False
 
 

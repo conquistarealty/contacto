@@ -81,7 +81,8 @@ class Question(Schema):
             # loop through each string
             valid_label = []
             for line in self.label:
-                assert isinstance(line, str), "Label list only allows strings."
+                if not isinstance(line, str):
+                    raise ValueError("Label list only allows strings.")
                 valid_label.append(line)
 
             # now join all strings and update instructions
@@ -117,7 +118,8 @@ class Config(Schema):
             # loop through each string
             valid_instructions = []
             for line in self.instructions:
-                assert isinstance(line, str), "Instructions list only allows strings."
+                if not isinstance(line, str):
+                    raise ValueError("Instructions list only allows strings.")
                 valid_instructions.append(line)
 
             # now join all strings and update instructions
@@ -126,9 +128,21 @@ class Config(Schema):
 
 def check_config_schema(config: dict) -> bool:
     """Check if the config dictionary conforms to the expected schema."""
+    # initialize success flag to False
+    success = False
+
+    # attempt to validate config ...
     try:
-        # Create Config object
+        # create Config object
         _ = Config(**config)
-        return True
-    except (TypeError, ValueError):
-        return False
+
+        # validation is successful
+        success = True
+
+    # ... problem occured
+    except (TypeError, ValueError) as e:
+        raise AssertionError(f"Config schema validation failed: {e}") from e
+
+    # return the success flag
+    else:
+        return success
