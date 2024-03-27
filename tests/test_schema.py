@@ -277,6 +277,29 @@ def config_test_data() -> Generator[Tuple[Dict[str, Any], bool], None, None]:
         ],
     }, False
 
+    # invalid config: questions have the same "name" attribute
+    yield {
+        "email": "example@example.com",
+        "title": "Title",
+        "form_backend_url": "http://example.com/form",
+        "subject": "Subject",
+        "questions": [
+            {
+                "label": "Question 7",
+                "name": "question7",
+                "type": "text",
+                "required": True,
+                "custom": {"placeholder": "Enter your answer here"},
+            },
+            {
+                "label": "Question 8",
+                "name": "question7",
+                "type": "number",
+                "required": True,
+            },
+        ],
+    }, False
+
 
 @pytest.mark.schema
 @pytest.mark.parametrize("config_data, expected_result", config_test_data())
