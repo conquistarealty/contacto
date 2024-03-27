@@ -6,7 +6,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh; /* Ensure the body covers the entire viewport height */
-    background-color: #222; /* Dark background color */
+    background-color: #181818; /* Dark background color */
     color: #ddd; /* Light text color */
     overflow-y: auto; /* Allow vertical overflow */
 }
